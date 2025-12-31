@@ -7,18 +7,75 @@ import "strconv"
 type ValueFlag uint32
 
 const (
-	ValueFlagNone    ValueFlag = 0
-	ValueFlagPointer ValueFlag = 1
+	ValueFlagNone          ValueFlag = 0
+	ValueFlagPointer       ValueFlag = 1
+	ValueFlagQuotation     ValueFlag = 2
+	ValueFlagIfConditon    ValueFlag = 4
+	ValueFlagIfBody        ValueFlag = 8
+	ValueFlagIfElse        ValueFlag = 16
+	ValueFlagFuncMeta      ValueFlag = 32
+	ValueFlagFuncParam     ValueFlag = 64
+	ValueFlagFuncBody      ValueFlag = 128
+	ValueFlagSwitchExp     ValueFlag = 256
+	ValueFlagSwitchBody    ValueFlag = 512
+	ValueFlagCaseExp       ValueFlag = 1024
+	ValueFlagCaseBody      ValueFlag = 2048
+	ValueFlagForInit       ValueFlag = 4096
+	ValueFlagForCondition  ValueFlag = 8192
+	ValueFlagForPost       ValueFlag = 16384
+	ValueFlagForBody       ValueFlag = 32768
+	ValueFlagForRangeVar1  ValueFlag = 65536
+	ValueFlagForRangeVar2  ValueFlag = 131072
+	ValueFlagForRangeValue ValueFlag = 262144
+	ValueFlagDefaultBody   ValueFlag = 524288
 )
 
 var EnumNamesValueFlag = map[ValueFlag]string{
-	ValueFlagNone:    "None",
-	ValueFlagPointer: "Pointer",
+	ValueFlagNone:          "None",
+	ValueFlagPointer:       "Pointer",
+	ValueFlagQuotation:     "Quotation",
+	ValueFlagIfConditon:    "IfConditon",
+	ValueFlagIfBody:        "IfBody",
+	ValueFlagIfElse:        "IfElse",
+	ValueFlagFuncMeta:      "FuncMeta",
+	ValueFlagFuncParam:     "FuncParam",
+	ValueFlagFuncBody:      "FuncBody",
+	ValueFlagSwitchExp:     "SwitchExp",
+	ValueFlagSwitchBody:    "SwitchBody",
+	ValueFlagCaseExp:       "CaseExp",
+	ValueFlagCaseBody:      "CaseBody",
+	ValueFlagForInit:       "ForInit",
+	ValueFlagForCondition:  "ForCondition",
+	ValueFlagForPost:       "ForPost",
+	ValueFlagForBody:       "ForBody",
+	ValueFlagForRangeVar1:  "ForRangeVar1",
+	ValueFlagForRangeVar2:  "ForRangeVar2",
+	ValueFlagForRangeValue: "ForRangeValue",
+	ValueFlagDefaultBody:   "DefaultBody",
 }
 
 var EnumValuesValueFlag = map[string]ValueFlag{
-	"None":    ValueFlagNone,
-	"Pointer": ValueFlagPointer,
+	"None":          ValueFlagNone,
+	"Pointer":       ValueFlagPointer,
+	"Quotation":     ValueFlagQuotation,
+	"IfConditon":    ValueFlagIfConditon,
+	"IfBody":        ValueFlagIfBody,
+	"IfElse":        ValueFlagIfElse,
+	"FuncMeta":      ValueFlagFuncMeta,
+	"FuncParam":     ValueFlagFuncParam,
+	"FuncBody":      ValueFlagFuncBody,
+	"SwitchExp":     ValueFlagSwitchExp,
+	"SwitchBody":    ValueFlagSwitchBody,
+	"CaseExp":       ValueFlagCaseExp,
+	"CaseBody":      ValueFlagCaseBody,
+	"ForInit":       ValueFlagForInit,
+	"ForCondition":  ValueFlagForCondition,
+	"ForPost":       ValueFlagForPost,
+	"ForBody":       ValueFlagForBody,
+	"ForRangeVar1":  ValueFlagForRangeVar1,
+	"ForRangeVar2":  ValueFlagForRangeVar2,
+	"ForRangeValue": ValueFlagForRangeValue,
+	"DefaultBody":   ValueFlagDefaultBody,
 }
 
 func (v ValueFlag) String() string {

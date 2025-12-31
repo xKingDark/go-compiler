@@ -1,62 +1,85 @@
 package golang
 
 import (
+	"bytes"
 	"fmt"
-	schema "opticode/compile/golang/golang"
+	"log"
+	"os"
+	"sync"
+
+	schema "github.com/Opticode-Project/go-compiler/golang"
+	program "github.com/Opticode-Project/go-compiler/program"
 )
 
 type GoFile struct {
+	Content *[]byte
+	nodes   *map[int64]*DeserializeNode
 }
 
-func (gf *GoFile) Write(dir string) error {
-	return nil
+func (gf *GoFile) Write(s string) error {
+	return os.WriteFile(s, *gf.Content, 0)
 }
 
 type DeserializeNode struct {
-	Flags   schema.Flag // Node flags
-	Module  uint8       // Index of the nodes' module
-	Content *[]byte     // Evaluated node content
-	Span    [2]uint32   // File line span
+	Flags   schema.NodeFlag // Node flags
+	Module  uint8           // Index of the nodes' module
+	Content *[]byte         // Evaluated node content
+	Span    [2]uint32       // File line span
 }
 
 type Generator struct {
-	program *schema.Program
+	program *program.App
 	buf     *[]byte
 
-	nodeOffsets map[int64]int
+	nodeOffsets    map[int64]int
+	StrLookupMutex sync.Mutex
+	modulePath     map[uint8][]int
+
 	// nodeId -> deserialized node
-	nodes map[int64]*DeserializeNode
+	nodes      map[int64]*DeserializeNode
+	nodesMutex sync.Mutex
 }
 
-func NewGenerator(program *schema.Program, buf *[]byte) *Generator {
-	var nodeOffset = make(map[int64]int)
+func NewGenerator(app *program.App, buf *[]byte) *Generator {
+	var nodesLength = app.NodesLength()
+	var nodeOffset = make(map[int64]int, nodesLength)
+	var path = []int{0}
+	for i := range nodesLength {
+		var n program.Node
+		app.Nodes(&n, i)
 
-	for i := range program.NodesLength() {
-		var n *schema.Node
-		program.Nodes(n, i)
+		log.Println(n.Id(), schema.Opcode(n.Opcode()), schema.NodeFlag(n.Flags()), n.Next())
+
+		if i == int(path[len(path)-1]) {
+			path = append(path, int(n.Next()))
+		}
 
 		nodeOffset[n.Id()] = i
 	}
 
+	modulePath := make(map[uint8][]int)
+	modulePath[0] = path
+	log.Printf("Path: %v", path)
 	return &Generator{
-		program:     program,
+		program:     app,
 		buf:         buf,
 		nodeOffsets: nodeOffset,
-		nodes:       make(map[int64]*DeserializeNode), //! Should estimate total size
+		modulePath:  modulePath,
+		nodes:       make(map[int64]*DeserializeNode, nodesLength),
 	}
 }
 
-func (g *Generator) LookUpStr(i uint32) ([]byte, error) {
-	var str *schema.StringEntry
-	ok := g.program.LutByKey(str, i)
+func (g *Generator) LookUpStr(i uint32) ([]byte, bool) {
+	var str program.StringEntry
+	ok := g.program.LutByKey(&str, i)
 	if !ok {
-		return nil, fmt.Errorf("look-up failed: cannot find item with index %d", i)
+		return nil, ok
 	}
-	return str.Value(), nil
+	return str.Value(), ok
 }
 
-func (g *Generator) LookUpType(t uint32) (*schema.TypeDef, error) {
-	var _type *schema.TypeEntry
+func (g *Generator) LookUpType(t uint32) (*program.TypeDef, error) {
+	var _type *program.TypeEntry
 	ok := g.program.TypesByKey(_type, t)
 	if !ok {
 		return nil, fmt.Errorf("look-up failed: cannot find item with index %d", t)
@@ -64,18 +87,18 @@ func (g *Generator) LookUpType(t uint32) (*schema.TypeDef, error) {
 	return _type.Value(nil), nil
 }
 
-func (g *Generator) GetNode(id int64) *schema.Node {
+func (g *Generator) GetNode(id int64) *program.Node {
 	i, ok := g.nodeOffsets[id]
 	if !ok {
 		return nil
 	}
-	var node *schema.Node
-	g.program.Nodes(node, i)
+	var node program.Node
+	g.program.Nodes(&node, i)
 
-	return node
+	return &node
 }
 
-func (g *Generator) Write(id int64, flags schema.Flag, module uint8, content *[]byte) {
+func (g *Generator) Write(id int64, flags schema.NodeFlag, module uint8, content *[]byte) {
 	g.nodes[id] = &DeserializeNode{
 		Flags:   flags,
 		Module:  module,
@@ -85,6 +108,25 @@ func (g *Generator) Write(id int64, flags schema.Flag, module uint8, content *[]
 	}
 }
 
+func (g *Generator) PrintNodes() {
+	for k, v := range g.nodes {
+		log.Println(k, string(*v.Content))
+	}
+}
+
 func (g *Generator) Export() ([]*GoFile, error) {
-	return nil, nil
+	var out bytes.Buffer
+	for _, v := range g.nodes {
+		out.Write(*v.Content)
+		out.WriteRune('\n')
+	}
+
+	o := out.Bytes()
+
+	t := &GoFile{
+		Content: &o,
+		nodes:   &g.nodes,
+	}
+
+	return []*GoFile{t}, nil
 }

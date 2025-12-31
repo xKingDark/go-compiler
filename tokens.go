@@ -9,9 +9,14 @@ const (
 	TokenQuotation
 	TokenParenLeft  // (
 	TokenParenRight // )
+	TokenEqual      // =
+	TokenCompare
 	TokenTab
 	TokenPackage
 	TokenImport
+	TokenConst
+	TokenVar
+	TokenIf
 )
 
 var tokens = [][]byte{
@@ -21,9 +26,14 @@ var tokens = [][]byte{
 	[]byte("\""),
 	[]byte("("),
 	[]byte(")"),
+	[]byte("="),
+	[]byte("=="),
 	[]byte("    "),
 	[]byte("package"),
 	[]byte("import"),
+	[]byte("const"),
+	[]byte("var"),
+	[]byte("if"),
 }
 
 func (t TokenKind) Bytes() []byte {

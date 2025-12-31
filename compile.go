@@ -1,28 +1,42 @@
 package golang
 
 import (
-	"fmt"
-	schema "opticode/compile/golang/golang"
+	"log"
 	"sync"
+
+	schema "github.com/Opticode-Project/go-compiler/golang"
+	program "github.com/Opticode-Project/go-compiler/program"
 )
 
-//go:generate bash ./generate.sh
+//go:generate bash ./generate-golang.sh
+//go:generate bash ./generate-program.sh
 
 // Compiles buffer into go files.
-// lut -> Look-up table for strings used in the program
-// buf -> flatbuffer's buffer
 func Compile(buf *[]byte) ([]*GoFile, error) {
-	program := schema.GetRootAsProgram(*buf, 0)
+	app := program.GetRootAsApp(*buf, 0)
 
-	nodesLength := program.NodesLength()
-	gen := NewGenerator(program, buf)
+	// for i := range app.LutLength() {
+	// 	var v program.StringEntry
+	// 	app.Lut(&v, i)
+
+	// 	log.Println(v.Key(), string(v.Value()))
+
+	// 	ok := app.LutByKey(&v, v.Key())
+	// 	if ok {
+	// 		log.Println("yeah it ok")
+	// 	}
+	// }
+	gen := NewGenerator(app, buf)
 
 	const maxRoutines = 5 // maximum allowed concurrent goroutines
 
 	sem := make(chan struct{}, maxRoutines) // semaphore channel
 	var wg sync.WaitGroup
 
-	for i := range nodesLength - 1 {
+	for _, i := range gen.modulePath[0] {
+		if i == -1 {
+			break
+		}
 		sem <- struct{}{} // acquire a "slot" (pauses if full)
 		wg.Add(1)
 
@@ -30,15 +44,28 @@ func Compile(buf *[]byte) ([]*GoFile, error) {
 			defer wg.Done()
 			defer func() { <-sem }() // release the slot when done
 
-			var node *schema.Node
-			program.Nodes(node, index)
+			var node program.Node
+			app.Nodes(&node, index)
 
-			gen.Eval(node)
+			buf, err := gen.Eval(&node, 0)
+			if err != nil {
+				log.Println(err)
+			}
+			gen.nodesMutex.Lock()
+			gen.Write(node.Id(), schema.NodeFlag(node.Flags()), 0, &buf)
+			gen.nodesMutex.Unlock()
 		}(i)
 	}
 
 	wg.Wait()
-	fmt.Println("All tasks completed")
 
-	return nil, nil
+	// for i := range nodesLength {
+	// 	log.Printf("index: %d", i)
+	// 	var node program.Node
+	// 	app.Nodes(&node, i)
+	// 	gen.Eval(&node)
+	// }
+
+	//gen.PrintNodes()
+	return gen.Export()
 }

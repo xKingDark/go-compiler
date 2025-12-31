@@ -19,70 +19,69 @@ const (
 	OpcodeIf               Opcode = 9
 	OpcodeFor              Opcode = 10
 	OpcodeForRange         Opcode = 11
-	OpcodeRange            Opcode = 12
-	OpcodeSwitch           Opcode = 13
-	OpcodeSelect           Opcode = 14
-	OpcodeCase             Opcode = 15
-	OpcodeDefault          Opcode = 16
-	OpcodeAdd              Opcode = 17
-	OpcodeSub              Opcode = 18
-	OpcodeMul              Opcode = 19
-	OpcodeDiv              Opcode = 20
-	OpcodeMod              Opcode = 21
-	OpcodeInc              Opcode = 22
-	OpcodeDec              Opcode = 23
-	OpcodeAssign           Opcode = 24
-	OpcodeAddAssign        Opcode = 25
-	OpcodeSubAssign        Opcode = 26
-	OpcodeMulAssign        Opcode = 27
-	OpcodeDivAssign        Opcode = 28
-	OpcodeModAssign        Opcode = 29
-	OpcodeBitAndAssign     Opcode = 30
-	OpcodeBitOrAssign      Opcode = 31
-	OpcodeBitXorAssign     Opcode = 32
-	OpcodeBitClearAssign   Opcode = 33
-	OpcodeLeftShiftAssign  Opcode = 34
-	OpcodeRightShiftAssign Opcode = 35
-	OpcodeEqual            Opcode = 36
-	OpcodeNotEqual         Opcode = 37
-	OpcodeLess             Opcode = 38
-	OpcodeLessEqual        Opcode = 39
-	OpcodeGreater          Opcode = 40
-	OpcodeGreaterEqual     Opcode = 41
-	OpcodeAnd              Opcode = 42
-	OpcodeOr               Opcode = 43
-	OpcodeNot              Opcode = 44
-	OpcodeBitAnd           Opcode = 45
-	OpcodeBitOr            Opcode = 46
-	OpcodeBitXor           Opcode = 47
-	OpcodeBitClear         Opcode = 48
-	OpcodeLeftShift        Opcode = 49
-	OpcodeRightShift       Opcode = 50
-	OpcodeSend             Opcode = 51
-	OpcodeReceive          Opcode = 52
-	OpcodeAddrOf           Opcode = 53
-	OpcodeDeref            Opcode = 54
-	OpcodeCall             Opcode = 55
-	OpcodeReturn           Opcode = 56
-	OpcodeDefer            Opcode = 57
-	OpcodeGoRoutine        Opcode = 58
-	OpcodeMap              Opcode = 59
-	OpcodeArray            Opcode = 60
-	OpcodeChan             Opcode = 61
-	OpcodePanic            Opcode = 62
-	OpcodeRecover          Opcode = 63
-	OpcodeMake             Opcode = 64
-	OpcodeNew              Opcode = 65
-	OpcodeLen              Opcode = 66
-	OpcodeCap              Opcode = 67
-	OpcodeAppend           Opcode = 68
-	OpcodeCopy             Opcode = 69
-	OpcodeClose            Opcode = 70
-	OpcodeComplex          Opcode = 71
-	OpcodeReal             Opcode = 72
-	OpcodeImag             Opcode = 73
-	OpcodePrint            Opcode = 74
-	OpcodePrintln          Opcode = 75
+	OpcodeSwitch           Opcode = 12
+	OpcodeSelect           Opcode = 13
+	OpcodeCase             Opcode = 14
+	OpcodeDefault          Opcode = 15
+	OpcodeAdd              Opcode = 16
+	OpcodeSub              Opcode = 17
+	OpcodeMul              Opcode = 18
+	OpcodeDiv              Opcode = 19
+	OpcodeMod              Opcode = 20
+	OpcodeInc              Opcode = 21
+	OpcodeDec              Opcode = 22
+	OpcodeAssign           Opcode = 23
+	OpcodeAddAssign        Opcode = 24
+	OpcodeSubAssign        Opcode = 25
+	OpcodeMulAssign        Opcode = 26
+	OpcodeDivAssign        Opcode = 27
+	OpcodeModAssign        Opcode = 28
+	OpcodeBitAndAssign     Opcode = 29
+	OpcodeBitOrAssign      Opcode = 30
+	OpcodeBitXorAssign     Opcode = 31
+	OpcodeBitClearAssign   Opcode = 32
+	OpcodeLeftShiftAssign  Opcode = 33
+	OpcodeRightShiftAssign Opcode = 34
+	OpcodeEqual            Opcode = 35
+	OpcodeNotEqual         Opcode = 36
+	OpcodeLess             Opcode = 37
+	OpcodeLessEqual        Opcode = 38
+	OpcodeGreater          Opcode = 39
+	OpcodeGreaterEqual     Opcode = 40
+	OpcodeAnd              Opcode = 41
+	OpcodeOr               Opcode = 42
+	OpcodeNot              Opcode = 43
+	OpcodeBitAnd           Opcode = 44
+	OpcodeBitOr            Opcode = 45
+	OpcodeBitXor           Opcode = 46
+	OpcodeBitClear         Opcode = 47
+	OpcodeLeftShift        Opcode = 48
+	OpcodeRightShift       Opcode = 49
+	OpcodeSend             Opcode = 50
+	OpcodeReceive          Opcode = 51
+	OpcodeAddrOf           Opcode = 52
+	OpcodeDeref            Opcode = 53
+	OpcodeCall             Opcode = 54
+	OpcodeReturn           Opcode = 55
+	OpcodeDefer            Opcode = 56
+	OpcodeGoRoutine        Opcode = 57
+	OpcodeMap              Opcode = 58
+	OpcodeArray            Opcode = 59
+	OpcodeChan             Opcode = 60
+	OpcodePanic            Opcode = 61
+	OpcodeRecover          Opcode = 62
+	OpcodeMake             Opcode = 63
+	OpcodeNew              Opcode = 64
+	OpcodeLen              Opcode = 65
+	OpcodeCap              Opcode = 66
+	OpcodeAppend           Opcode = 67
+	OpcodeCopy             Opcode = 68
+	OpcodeClose            Opcode = 69
+	OpcodeComplex          Opcode = 70
+	OpcodeReal             Opcode = 71
+	OpcodeImag             Opcode = 72
+	OpcodePrint            Opcode = 73
+	OpcodePrintln          Opcode = 74
 )
 
 var EnumNamesOpcode = map[Opcode]string{
@@ -98,7 +97,6 @@ var EnumNamesOpcode = map[Opcode]string{
 	OpcodeIf:               "If",
 	OpcodeFor:              "For",
 	OpcodeForRange:         "ForRange",
-	OpcodeRange:            "Range",
 	OpcodeSwitch:           "Switch",
 	OpcodeSelect:           "Select",
 	OpcodeCase:             "Case",
@@ -177,7 +175,6 @@ var EnumValuesOpcode = map[string]Opcode{
 	"If":               OpcodeIf,
 	"For":              OpcodeFor,
 	"ForRange":         OpcodeForRange,
-	"Range":            OpcodeRange,
 	"Switch":           OpcodeSwitch,
 	"Select":           OpcodeSelect,
 	"Case":             OpcodeCase,
