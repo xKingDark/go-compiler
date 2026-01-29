@@ -2,7 +2,6 @@ package golang
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -12,6 +11,7 @@ import (
 )
 
 type GoFile struct {
+	Path    string
 	Content *[]byte
 	nodes   *map[int64]*DeserializeNode
 }
@@ -78,13 +78,13 @@ func (g *Generator) LookUpStr(i uint32) ([]byte, bool) {
 	return str.Value(), ok
 }
 
-func (g *Generator) LookUpType(t uint32) (*program.TypeDef, error) {
-	var _type *program.TypeEntry
-	ok := g.program.TypesByKey(_type, t)
+func (g *Generator) LookUpType(t uint32) (*program.TypeDef, bool) {
+	var _type program.TypeEntry
+	ok := g.program.TypesByKey(&_type, t)
 	if !ok {
-		return nil, fmt.Errorf("look-up failed: cannot find item with index %d", t)
+		return nil, ok
 	}
-	return _type.Value(nil), nil
+	return _type.Value(nil), true
 }
 
 func (g *Generator) GetNode(id int64) *program.Node {
@@ -114,11 +114,14 @@ func (g *Generator) PrintNodes() {
 	}
 }
 
-func (g *Generator) Export() ([]*GoFile, error) {
+func (g *Generator) Export(p []int) ([]*GoFile, error) {
 	var out bytes.Buffer
-	for _, v := range g.nodes {
-		out.Write(*v.Content)
-		out.WriteRune('\n')
+	for _, id := range p {
+		if n, ok := g.nodes[int64(id)]; ok {
+			out.Grow(len(*n.Content))
+			out.Write(*n.Content)
+			out.WriteRune('\n')
+		}
 	}
 
 	o := out.Bytes()

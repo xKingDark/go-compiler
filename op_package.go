@@ -11,7 +11,7 @@ func (g *Generator) op_package(node *program.IndexedNode, flags EvalFlags) ([]by
 	id, ok := g.LookUpStr(node.Id())
 	g.StrLookupMutex.Unlock()
 	if !ok {
-		return nil, fmt.Errorf("string of with id %d is undefined", node.Id())
+		return nil, fmt.Errorf("string with id %d is undefined", node.Id())
 	}
 	return JoinBytes(TokenPackage.Bytes(), TokenSpace.Bytes(), id), nil
 }

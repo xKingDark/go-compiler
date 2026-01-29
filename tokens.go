@@ -17,6 +17,8 @@ const (
 	TokenConst
 	TokenVar
 	TokenIf
+	TokenElse
+	TokenFunc
 )
 
 var tokens = [][]byte{
@@ -34,6 +36,8 @@ var tokens = [][]byte{
 	[]byte("const"),
 	[]byte("var"),
 	[]byte("if"),
+	[]byte("else"),
+	[]byte("func"),
 }
 
 func (t TokenKind) Bytes() []byte {
@@ -41,6 +45,13 @@ func (t TokenKind) Bytes() []byte {
 		return nil
 	}
 	return tokens[t]
+}
+
+func (t TokenKind) Len() int {
+	if int(t) >= len(tokens) {
+		return 0
+	}
+	return len(tokens[t])
 }
 
 // JoinBytes efficiently concatenates multiple byte slices into one.

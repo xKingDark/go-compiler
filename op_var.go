@@ -8,7 +8,7 @@ import (
 	program "github.com/Opticode-Project/go-compiler/program"
 )
 
-func (g *Generator) op_import(node *program.IndexedNode, flags EvalFlags) ([]byte, error) {
+func (g *Generator) op_var(node *program.IndexedNode, flags EvalFlags) ([]byte, error) {
 	length := node.FieldsLength()
 	buf := new(bytes.Buffer)
 	var flag EvalFlags
@@ -37,7 +37,7 @@ func (g *Generator) op_import(node *program.IndexedNode, flags EvalFlags) ([]byt
 			}
 
 			//! This preforms an allocation each cycle. (not good)
-			buf.Write(JoinBytes(TokenSpace.Bytes(), out))
+			buf.Write(out)
 		} else {
 			return nil, fmt.Errorf("import node fields can only be pointers")
 		}
@@ -48,8 +48,8 @@ func (g *Generator) op_import(node *program.IndexedNode, flags EvalFlags) ([]byt
 
 	if length > 1 {
 		//! messy and needs work
-		return JoinBytes(TokenImport.Bytes(), TokenSpace.Bytes(), TokenParenLeft.Bytes(), TokenNewLine.Bytes(), buf.Bytes(), TokenParenRight.Bytes()), nil
+		return JoinBytes(TokenVar.Bytes(), TokenSpace.Bytes(), TokenParenLeft.Bytes(), TokenNewLine.Bytes(), buf.Bytes(), TokenParenRight.Bytes()), nil
 	}
 	//! includes the tab seperator (not intended)
-	return JoinBytes(TokenImport.Bytes(), buf.Bytes()), nil
+	return JoinBytes(TokenVar.Bytes(), buf.Bytes()), nil
 }

@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"bytes"
 	"fmt"
 
 	schema "github.com/Opticode-Project/go-compiler/golang"
@@ -20,7 +21,7 @@ func (g *Generator) Eval(node *program.Node, evalFlags EvalFlags) ([]byte, error
 
 	if node.Node(unionTable) {
 		nodeType := node.NodeType()
-		out := []byte{}
+		out := []byte{} // WARN - Should be bytes.Buffer
 		switch nodeType {
 		case program.NodeUnionIndexedNode:
 			type1 := new(program.IndexedNode)
@@ -89,4 +90,46 @@ func (g *Generator) EvalUnary(opcode schema.Opcode, node *program.UnaryNode, eva
 	switch opcode {
 	}
 	return nil, fmt.Errorf("invalid opcode on node with opcode of %s", opcode)
+}
+
+func (g *Generator) evalValue(buf *bytes.Buffer, nodeValue *program.NodeValue) error {
+	if nodeValue.Flags()&uint32(schema.ValueFlagPointer) != 0 {
+		node := g.GetNode(nodeValue.Value())
+		if node == nil {
+			return fmt.Errorf("attempt to access undefined node: %d", nodeValue.Value())
+		}
+		out, err := g.Eval(node, 0)
+		if err != nil {
+			return err
+		}
+		buf.Write(out)
+	} else {
+		g.StrLookupMutex.Lock()
+		value, ok := g.LookUpStr(uint32(nodeValue.Value()))
+		g.StrLookupMutex.Unlock()
+		if !ok {
+			return fmt.Errorf("string with id %d is undefined", nodeValue.Value())
+		}
+		if nodeValue.Flags()&uint32(schema.ValueFlagQuotation) != 0 {
+			buf.Write(JoinBytes(TokenQuotation.Bytes(), value, TokenQuotation.Bytes()))
+		} else {
+			buf.Write(value)
+		}
+	}
+	return nil
+}
+
+func EvalType(t *program.TypeDef) any {
+	unionTable := new(fb.Table)
+
+	if t.Type(unionTable) {
+		goType := t.TypeType()
+		switch goType {
+		case program.TypePointerType:
+			ptr := new(program.PointerType)
+			ptr.Init(unionTable.Bytes, unionTable.Pos)
+			return ptr
+		}
+	}
+	return nil
 }

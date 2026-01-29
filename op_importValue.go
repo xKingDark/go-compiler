@@ -22,7 +22,7 @@ func (g *Generator) op_importValue(node *program.BinaryNode, flags EvalFlags) ([
 	leftValue, ok := g.LookUpStr(uint32(left.Value()))
 	g.StrLookupMutex.Unlock()
 	if !ok {
-		return nil, fmt.Errorf("string of with id %d is undefined", left.Value())
+		return nil, fmt.Errorf("string with id %d is undefined", left.Value())
 	}
 	buf.Write(leftValue)
 	// write seperator
@@ -32,7 +32,7 @@ func (g *Generator) op_importValue(node *program.BinaryNode, flags EvalFlags) ([
 	rightValue, ok := g.LookUpStr(uint32(right.Value()))
 	g.StrLookupMutex.Unlock()
 	if !ok {
-		return nil, fmt.Errorf("string of with id %d is undefined", right.Value())
+		return nil, fmt.Errorf("string with id %d is undefined", right.Value())
 	}
 	buf.Write(JoinBytes(TokenQuotation.Bytes(), rightValue, TokenQuotation.Bytes()))
 

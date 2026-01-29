@@ -67,5 +67,5 @@ func Compile(buf *[]byte) ([]*GoFile, error) {
 	// }
 
 	//gen.PrintNodes()
-	return gen.Export()
+	return gen.Export(gen.modulePath[0])
 }
