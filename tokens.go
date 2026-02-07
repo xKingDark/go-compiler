@@ -7,9 +7,12 @@ const (
 	TokenSpace
 	TokenNewLine
 	TokenQuotation
-	TokenParenLeft  // (
-	TokenParenRight // )
-	TokenEqual      // =
+	TokenParenLeft   // (
+	TokenParenRight  // )
+	TokenBracesLeft  // {
+	TokenBracesRight // }
+	TokenEqual       // =
+	TokenComma       // ,
 	TokenCompare
 	TokenTab
 	TokenPackage
@@ -28,7 +31,10 @@ var tokens = [][]byte{
 	[]byte("\""),
 	[]byte("("),
 	[]byte(")"),
+	[]byte("{"),
+	[]byte("}"),
 	[]byte("="),
+	[]byte(","),
 	[]byte("=="),
 	[]byte("    "),
 	[]byte("package"),

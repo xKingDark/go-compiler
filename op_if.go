@@ -8,64 +8,82 @@ import (
 	program "github.com/Opticode-Project/go-compiler/program"
 )
 
-func (g *Generator) op_if(node *program.IndexedNode, flags EvalFlags) ([]byte, error) {
+func (g *Generator) op_if(buf *bytes.Buffer, node *program.IndexedNode, flags EvalFlags) error {
+	var (
+		condition bytes.Buffer
+		thenBody  bytes.Buffer
+		elseBody  bytes.Buffer
+	)
+	var elseIfNode *program.Node
+
 	length := node.FieldsLength()
-
-	buf := new(bytes.Buffer)
-	condition := new(bytes.Buffer)
-	body := new(bytes.Buffer)
-	_else := new(bytes.Buffer)
-
 	for i := range length {
 		var field program.NodeValue
 		node.Fields(&field, i)
 
-		//log.Printf("Field: %d, %s", field.Value(), schema.ValueFlag(field.Flags()))
-		if field.Flags()&uint32(schema.ValueFlagPointer) != 0 {
-			node := g.GetNode(field.Value())
-			if node == nil {
-				return nil, fmt.Errorf("attempt to access undefined node: %d", field.Value())
-			}
-			out, err := g.Eval(node, 0)
-			if err != nil {
-				return nil, err
+		if field.Flags()&uint32(schema.ValueFlagPointer) == 0 {
+			return fmt.Errorf("if node fields can only be pointers")
+		}
+
+		node := g.GetNode(field.Value())
+		if node == nil {
+			return fmt.Errorf("attempt to access undefined node: %d", field.Value())
+		}
+
+		switch {
+		case field.Flags()&uint32(schema.ValueFlagIfConditon) != 0:
+			if err := g.evalNode(&condition, node, 0); err != nil {
+				return err
 			}
 
-			if field.Flags()&uint32(schema.ValueFlagIfConditon) != 0 {
-				condition.Write(out)
-			} else if field.Flags()&uint32(schema.ValueFlagIfBody) != 0 {
-				body.WriteByte('	')
-				body.Write(out)
-				body.WriteByte('\n')
-			} else if field.Flags()&uint32(schema.ValueFlagIfElse) != 0 {
-				body.WriteByte('	')
-				_else.Write(out)
-				body.WriteByte('\n')
+		case field.Flags()&uint32(schema.ValueFlagIfBody) != 0:
+			thenBody.Write(TokenTab.Bytes())
+			if err := g.evalNode(&thenBody, node, 0); err != nil {
+				return err
 			}
-		} else {
-			return nil, fmt.Errorf("func node fields can only be pointers")
+			thenBody.Write(TokenNewLine.Bytes())
+
+		case field.Flags()&uint32(schema.ValueFlagIfElse) != 0:
+			if schema.Opcode(node.Opcode()) == schema.OpcodeIf {
+				elseIfNode = node
+			} else {
+				elseBody.Write(TokenTab.Bytes())
+				if err := g.evalNode(&elseBody, node, 0); err != nil {
+					return err
+				}
+				elseBody.Write(TokenNewLine.Bytes())
+			}
 		}
 	}
-	buf.Grow(condition.Len() + body.Len() + _else.Len())
 
 	buf.Write(TokenIf.Bytes())
-	buf.WriteByte(' ')
+	buf.Write(TokenSpace.Bytes())
 	buf.Write(condition.Bytes())
-	buf.WriteByte(' ')
-	buf.WriteByte('{')
-	buf.WriteByte('\n')
-	buf.Write(body.Bytes())
-	buf.WriteByte('}')
+	buf.Write(TokenSpace.Bytes())
 
-	if _else.Len() > 0 {
-		buf.WriteByte(' ')
+	buf.Write(TokenBracesLeft.Bytes())
+	buf.Write(TokenNewLine.Bytes())
+	buf.Write(thenBody.Bytes())
+	buf.Write(TokenBracesRight.Bytes())
+
+	if elseIfNode != nil {
+		buf.Write(TokenSpace.Bytes())
 		buf.Write(TokenElse.Bytes())
-		// WARN - unable to create `if else`
-		buf.WriteByte('{')
-		buf.WriteByte('\n')
-		buf.Write(_else.Bytes())
-		buf.WriteByte('}')
+		buf.Write(TokenSpace.Bytes())
+
+		if err := g.evalNode(buf, elseIfNode, flags); err != nil {
+			return err
+		}
+	} else if elseBody.Len() > 0 {
+		buf.Write(TokenSpace.Bytes())
+		buf.Write(TokenElse.Bytes())
+		buf.Write(TokenSpace.Bytes())
+
+		buf.Write(TokenBracesLeft.Bytes())
+		buf.Write(TokenNewLine.Bytes())
+		buf.Write(elseBody.Bytes())
+		buf.Write(TokenBracesRight.Bytes())
 	}
 
-	return buf.Bytes(), nil
+	return nil
 }

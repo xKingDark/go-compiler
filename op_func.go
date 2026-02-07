@@ -14,121 +14,130 @@ const (
 	resultsGrowthModifer = 16
 )
 
-func (g *Generator) op_func(node *program.IndexedNode, flags EvalFlags) ([]byte, error) {
+func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags EvalFlags) error {
 	length := node.FieldsLength()
 
-	buf := new(bytes.Buffer)
+	var (
+		funcId   []byte
+		funcType *program.FuncType
+	)
 
-	var funcId = make([]byte, 32)
-	var funcType *program.FuncType
-
-	params := new(bytes.Buffer)
-	params.Grow(length * paramsGrowthModifer)
-
-	body := new(bytes.Buffer)
-	body.Grow(length * bodyGrowthModifer)
+	var (
+		params bytes.Buffer
+		body   bytes.Buffer
+	)
 
 	for i := range length {
 		var field program.NodeValue
 		node.Fields(&field, i)
 
-		//log.Printf("Field: %d, %s", field.Value(), schema.ValueFlag(field.Flags()))
-		if field.Flags()&uint32(schema.ValueFlagPointer) != 0 {
-			node := g.GetNode(field.Value())
-			if node == nil {
-				return nil, fmt.Errorf("attempt to access undefined node: %d", field.Value())
-			}
-			out, err := g.Eval(node, 0)
-			if err != nil {
-				return nil, err
-			}
-
-			if field.Flags()&uint32(schema.ValueFlagFuncParam) != 0 {
-				if params.Len() > 0 {
-					params.WriteByte(',')
-					params.WriteByte(' ')
-				}
-				params.Write(out)
-			} else if field.Flags()&uint32(schema.ValueFlagFuncBody) != 0 {
-				body.WriteByte('	')
-				body.Write(out)
-				body.WriteByte('\n')
-			}
-		} else if field.Flags()&uint32(schema.ValueFlagFuncMeta) != 0 {
-			continue
+		if field.Flags()&uint32(schema.ValueFlagFuncMeta) != 0 {
 			def, ok := g.LookUpType(field.Type())
 			if !ok {
-				return nil, fmt.Errorf("type with id, %d is undefined", field.Type())
+				return fmt.Errorf("type with id %d is undefined", field.Type())
 			}
 
 			funcId = def.Id()
 
-			if v := EvalType(def); v != nil {
-				if v, ok := v.(program.FuncType); ok {
-					funcType = &v
-				}
+			v, err := EvalType(def)
+			if err != nil {
+				return err
 			}
+
+			ft, ok := v.(*program.FuncType)
+			if !ok {
+				return fmt.Errorf("expected *program.FuncType but got %T", v)
+			}
+
+			funcType = ft
+			continue
+		}
+
+		if field.Flags()&uint32(schema.ValueFlagPointer) == 0 {
+			return fmt.Errorf("func node fields can only be pointers")
+		}
+
+		target := g.GetNode(field.Value())
+		if target == nil {
+			return fmt.Errorf("attempt to access undefined node: %d", field.Value())
+		}
+
+		switch {
+		case field.Flags()&uint32(schema.ValueFlagFuncParam) != 0:
+			if params.Len() > 0 {
+				params.Write(TokenComma.Bytes())
+				params.Write(TokenSpace.Bytes())
+			}
+
+			if err := g.evalNode(&params, target, 0); err != nil {
+				return err
+			}
+
+		case field.Flags()&uint32(schema.ValueFlagFuncBody) != 0:
+			body.Write(TokenTab.Bytes())
+			if err := g.evalNode(&body, target, 0); err != nil {
+				return err
+			}
+
+			body.Write(TokenNewLine.Bytes())
 		}
 	}
+
 	resultsLen := funcType.ResultsLength()
 
-	var declarationLength = TokenFunc.Len() + (resultsLen * resultsGrowthModifer) + 8
-	buf.Grow(params.Len() + body.Len() + declarationLength)
-
+	// Function declaration
 	buf.Write(TokenFunc.Bytes())
-	buf.WriteByte(' ')
+	buf.Write(TokenSpace.Bytes())
 	buf.Write(funcId)
-	buf.WriteByte('(')
+	buf.Write(TokenParenLeft.Bytes())
 	buf.Write(params.Bytes())
-	buf.WriteByte(')')
+	buf.Write(TokenParenRight.Bytes())
 
-	if resultsLen > 0 {
-		buf.WriteByte(' ')
+	// Return values
+	if funcType != nil && resultsLen > 0 {
+		buf.Write(TokenSpace.Bytes())
 		if resultsLen > 1 {
-			buf.WriteByte('(')
+			buf.Write(TokenParenLeft.Bytes())
 		}
 
 		for i := range resultsLen {
 			var p program.Pair
 			funcType.Results(&p, i)
 
-			var ok bool
-			var name = make([]byte, 32)
-			g.StrLookupMutex.Lock()
-			name, ok = g.LookUpStr(p.Key())
-			g.StrLookupMutex.Unlock()
+			name, ok := g.LookUpStr(p.Key())
 			if !ok {
-				return nil, fmt.Errorf("string with id %d is undefined", node.Id())
+				return fmt.Errorf("string with id %d is undefined", p.Key())
 			}
-			var _type = make([]byte, 45)
-			g.StrLookupMutex.Lock()
-			_type, ok = g.LookUpStr(p.Value())
-			g.StrLookupMutex.Unlock()
+
+			_type, ok := g.LookUpType(p.Value())
 			if !ok {
-				return nil, fmt.Errorf("string with id %d is undefined", node.Id())
+				return fmt.Errorf("type with id %d is undefined", p.Value())
 			}
 
 			if i > 0 {
-				buf.WriteByte(',')
-				buf.WriteByte(' ')
-			}
-			if len(name) > 0 {
-				buf.Write(name)
-				buf.WriteByte(' ')
+				buf.Write(TokenComma.Bytes())
+				buf.Write(TokenSpace.Bytes())
 			}
 
-			buf.Write(_type)
+			if len(name) > 0 {
+				buf.Write(name)
+				buf.Write(TokenSpace.Bytes())
+			}
+
+			buf.Write(_type.Id())
 		}
 
 		if resultsLen > 1 {
-			buf.WriteByte(')')
+			buf.Write(TokenParenRight.Bytes())
 		}
 	}
-	buf.WriteByte(' ')
-	buf.WriteByte('{')
-	buf.WriteByte('\n')
-	buf.Write(body.Bytes())
-	buf.WriteByte('}')
 
-	return buf.Bytes(), nil
+	// Body
+	buf.Write(TokenSpace.Bytes())
+	buf.Write(TokenBracesLeft.Bytes())
+	buf.Write(TokenNewLine.Bytes())
+	buf.Write(body.Bytes())
+	buf.Write(TokenBracesRight.Bytes())
+
+	return nil
 }

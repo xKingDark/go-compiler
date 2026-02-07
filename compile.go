@@ -1,10 +1,6 @@
 package golang
 
 import (
-	"log"
-	"sync"
-
-	schema "github.com/Opticode-Project/go-compiler/golang"
 	program "github.com/Opticode-Project/go-compiler/program"
 )
 
@@ -28,36 +24,9 @@ func Compile(buf *[]byte) ([]*GoFile, error) {
 	// }
 	gen := NewGenerator(app, buf)
 
-	const maxRoutines = 5 // maximum allowed concurrent goroutines
-
-	sem := make(chan struct{}, maxRoutines) // semaphore channel
-	var wg sync.WaitGroup
-
-	for _, i := range gen.modulePath[0] {
-		if i == -1 {
-			break
-		}
-		sem <- struct{}{} // acquire a "slot" (pauses if full)
-		wg.Add(1)
-
-		go func(index int) {
-			defer wg.Done()
-			defer func() { <-sem }() // release the slot when done
-
-			var node program.Node
-			app.Nodes(&node, index)
-
-			buf, err := gen.Eval(&node, 0)
-			if err != nil {
-				log.Println(err)
-			}
-			gen.nodesMutex.Lock()
-			gen.Write(node.Id(), schema.NodeFlag(node.Flags()), 0, &buf)
-			gen.nodesMutex.Unlock()
-		}(i)
+	for index := range gen.modulePath {
+		gen.CompileModule(index)
 	}
-
-	wg.Wait()
 
 	// for i := range nodesLength {
 	// 	log.Printf("index: %d", i)

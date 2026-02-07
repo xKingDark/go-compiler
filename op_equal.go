@@ -2,22 +2,31 @@ package golang
 
 import (
 	"bytes"
+	"fmt"
 
 	program "github.com/Opticode-Project/go-compiler/program"
 )
 
-func (g *Generator) op_equal(node *program.BinaryNode, flags EvalFlags) ([]byte, error) {
+func (g *Generator) op_equal(buf *bytes.Buffer, node *program.BinaryNode, flags EvalFlags) error {
 	// Get the left and right values
 	left := node.Left(nil)
 	right := node.Right(nil)
 
-	// New buffer for building the content
-	var buf = new(bytes.Buffer)
-	g.evalValue(buf, left)
+	if left == nil || right == nil {
+		return fmt.Errorf("equal value operands cannot be nil")
+	}
 
-	buf.Write(JoinBytes(TokenSpace.Bytes(), TokenCompare.Bytes(), TokenSpace.Bytes()))
+	if err := g.evalValue(buf, left, false); err != nil {
+		return err
+	}
 
-	g.evalValue(buf, right)
+	buf.Write(TokenSpace.Bytes())
+	buf.Write(TokenCompare.Bytes())
+	buf.Write(TokenSpace.Bytes())
 
-	return buf.Bytes(), nil
+	if err := g.evalValue(buf, right, false); err != nil {
+		return err
+	}
+
+	return nil
 }
