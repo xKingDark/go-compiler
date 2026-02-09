@@ -53,12 +53,16 @@ func (rcv *TypeDef) MutateBase(n uint32) bool {
 	return rcv._tab.MutateUint32Slot(4, n)
 }
 
-func (rcv *TypeDef) Id() []byte {
+func (rcv *TypeDef) Id() uint32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
-		return rcv._tab.ByteVector(o + rcv._tab.Pos)
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
 	}
-	return nil
+	return 0
+}
+
+func (rcv *TypeDef) MutateId(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(6, n)
 }
 
 func (rcv *TypeDef) TypeType() Type {
@@ -82,20 +86,35 @@ func (rcv *TypeDef) Type(obj *flatbuffers.Table) bool {
 	return false
 }
 
+func (rcv *TypeDef) Flags() uint32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
+	if o != 0 {
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *TypeDef) MutateFlags(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(12, n)
+}
+
 func TypeDefStart(builder *flatbuffers.Builder) {
-	builder.StartObject(4)
+	builder.StartObject(5)
 }
 func TypeDefAddBase(builder *flatbuffers.Builder, base uint32) {
 	builder.PrependUint32Slot(0, base, 0)
 }
-func TypeDefAddId(builder *flatbuffers.Builder, id flatbuffers.UOffsetT) {
-	builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(id), 0)
+func TypeDefAddId(builder *flatbuffers.Builder, id uint32) {
+	builder.PrependUint32Slot(1, id, 0)
 }
 func TypeDefAddTypeType(builder *flatbuffers.Builder, typeType Type) {
 	builder.PrependByteSlot(2, byte(typeType), 0)
 }
 func TypeDefAddType(builder *flatbuffers.Builder, type_ flatbuffers.UOffsetT) {
 	builder.PrependUOffsetTSlot(3, flatbuffers.UOffsetT(type_), 0)
+}
+func TypeDefAddFlags(builder *flatbuffers.Builder, flags uint32) {
+	builder.PrependUint32Slot(4, flags, 0)
 }
 func TypeDefEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

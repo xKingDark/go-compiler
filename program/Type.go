@@ -9,34 +9,31 @@ type Type byte
 const (
 	TypeNONE          Type = 0
 	TypePointerType   Type = 1
-	TypeInterfaceType Type = 2
-	TypeStructType    Type = 3
-	TypeFuncType      Type = 4
-	TypeMapType       Type = 5
-	TypeArrayType     Type = 6
-	TypeChanType      Type = 7
+	TypeStructureType Type = 2
+	TypeFunctionType  Type = 3
+	TypeMapType       Type = 4
+	TypeArrayType     Type = 5
+	TypeTupleType     Type = 6
 )
 
 var EnumNamesType = map[Type]string{
 	TypeNONE:          "NONE",
 	TypePointerType:   "PointerType",
-	TypeInterfaceType: "InterfaceType",
-	TypeStructType:    "StructType",
-	TypeFuncType:      "FuncType",
+	TypeStructureType: "StructureType",
+	TypeFunctionType:  "FunctionType",
 	TypeMapType:       "MapType",
 	TypeArrayType:     "ArrayType",
-	TypeChanType:      "ChanType",
+	TypeTupleType:     "TupleType",
 }
 
 var EnumValuesType = map[string]Type{
 	"NONE":          TypeNONE,
 	"PointerType":   TypePointerType,
-	"InterfaceType": TypeInterfaceType,
-	"StructType":    TypeStructType,
-	"FuncType":      TypeFuncType,
+	"StructureType": TypeStructureType,
+	"FunctionType":  TypeFunctionType,
 	"MapType":       TypeMapType,
 	"ArrayType":     TypeArrayType,
-	"ChanType":      TypeChanType,
+	"TupleType":     TypeTupleType,
 }
 
 func (v Type) String() string {

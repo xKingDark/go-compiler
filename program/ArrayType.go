@@ -41,17 +41,16 @@ func (rcv *ArrayType) Table() flatbuffers.Table {
 	return rcv._tab
 }
 
-func (rcv *ArrayType) Elem(obj *TypeDef) *TypeDef {
+func (rcv *ArrayType) Elem() uint32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
 	if o != 0 {
-		x := rcv._tab.Indirect(o + rcv._tab.Pos)
-		if obj == nil {
-			obj = new(TypeDef)
-		}
-		obj.Init(rcv._tab.Bytes, x)
-		return obj
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
 	}
-	return nil
+	return 0
+}
+
+func (rcv *ArrayType) MutateElem(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(4, n)
 }
 
 func (rcv *ArrayType) Size() uint64 {
@@ -69,8 +68,8 @@ func (rcv *ArrayType) MutateSize(n uint64) bool {
 func ArrayTypeStart(builder *flatbuffers.Builder) {
 	builder.StartObject(2)
 }
-func ArrayTypeAddElem(builder *flatbuffers.Builder, elem flatbuffers.UOffsetT) {
-	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(elem), 0)
+func ArrayTypeAddElem(builder *flatbuffers.Builder, elem uint32) {
+	builder.PrependUint32Slot(0, elem, 0)
 }
 func ArrayTypeAddSize(builder *flatbuffers.Builder, size uint64) {
 	builder.PrependUint64Slot(1, size, 0)

@@ -41,40 +41,38 @@ func (rcv *MapType) Table() flatbuffers.Table {
 	return rcv._tab
 }
 
-func (rcv *MapType) Key(obj *TypeDef) *TypeDef {
+func (rcv *MapType) Key() uint32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
 	if o != 0 {
-		x := rcv._tab.Indirect(o + rcv._tab.Pos)
-		if obj == nil {
-			obj = new(TypeDef)
-		}
-		obj.Init(rcv._tab.Bytes, x)
-		return obj
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
 	}
-	return nil
+	return 0
 }
 
-func (rcv *MapType) Value(obj *TypeDef) *TypeDef {
+func (rcv *MapType) MutateKey(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(4, n)
+}
+
+func (rcv *MapType) Value() uint32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
-		x := rcv._tab.Indirect(o + rcv._tab.Pos)
-		if obj == nil {
-			obj = new(TypeDef)
-		}
-		obj.Init(rcv._tab.Bytes, x)
-		return obj
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
 	}
-	return nil
+	return 0
+}
+
+func (rcv *MapType) MutateValue(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(6, n)
 }
 
 func MapTypeStart(builder *flatbuffers.Builder) {
 	builder.StartObject(2)
 }
-func MapTypeAddKey(builder *flatbuffers.Builder, key flatbuffers.UOffsetT) {
-	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(key), 0)
+func MapTypeAddKey(builder *flatbuffers.Builder, key uint32) {
+	builder.PrependUint32Slot(0, key, 0)
 }
-func MapTypeAddValue(builder *flatbuffers.Builder, value flatbuffers.UOffsetT) {
-	builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(value), 0)
+func MapTypeAddValue(builder *flatbuffers.Builder, value uint32) {
+	builder.PrependUint32Slot(1, value, 0)
 }
 func MapTypeEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

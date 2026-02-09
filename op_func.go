@@ -19,7 +19,7 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 
 	var (
 		funcId   []byte
-		funcType *program.FuncType
+		funcType *program.FunctionType
 	)
 
 	var (
@@ -37,14 +37,19 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 				return fmt.Errorf("type with id %d is undefined", field.Type())
 			}
 
-			funcId = def.Id()
+			funcName, ok := g.LookUpStr(def.Id())
+			if !ok {
+				return fmt.Errorf("string with id %d is undefined", def.Id())
+			}
+
+			funcId = funcName
 
 			v, err := EvalType(def)
 			if err != nil {
 				return err
 			}
 
-			ft, ok := v.(*program.FuncType)
+			ft, ok := v.(*program.FunctionType)
 			if !ok {
 				return fmt.Errorf("expected *program.FuncType but got %T", v)
 			}
@@ -114,6 +119,11 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 				return fmt.Errorf("type with id %d is undefined", p.Value())
 			}
 
+			typeString, ok := g.LookUpStr(_type.Id())
+			if !ok {
+				return fmt.Errorf("string with id %d is undefined", _type.Id())
+			}
+
 			if i > 0 {
 				buf.Write(TokenComma.Bytes())
 				buf.Write(TokenSpace.Bytes())
@@ -124,7 +134,7 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 				buf.Write(TokenSpace.Bytes())
 			}
 
-			buf.Write(_type.Id())
+			buf.Write(typeString)
 		}
 
 		if resultsLen > 1 {

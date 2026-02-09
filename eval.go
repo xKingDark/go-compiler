@@ -248,8 +248,8 @@ func EvalType(t *program.TypeDef) (any, error) {
 	}
 
 	switch t.TypeType() {
-	case program.TypeFuncType:
-		ptr := new(program.FuncType)
+	case program.TypeFunctionType:
+		ptr := new(program.FunctionType)
 		ptr.Init(unionTable.Bytes, unionTable.Pos)
 
 		return ptr, nil
