@@ -8,12 +8,6 @@ import (
 	program "github.com/Opticode-Project/go-compiler/program"
 )
 
-const (
-	bodyGrowthModifer    = 32
-	paramsGrowthModifer  = 16
-	resultsGrowthModifer = 16
-)
-
 func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags EvalFlags) error {
 	length := node.FieldsLength()
 
@@ -88,56 +82,46 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 		}
 	}
 
-	resultsLen := funcType.ResultsLength()
-
 	// Function declaration
 	buf.Write(TokenFunc.Bytes())
 	buf.Write(TokenSpace.Bytes())
 	buf.Write(funcId)
 	buf.Write(TokenParenLeft.Bytes())
-	buf.Write(params.Bytes())
+
+	// Parameters
+	if funcType != nil && funcType.ParamsLength() > 0 {
+		err := g.writePairList(buf, funcType.ParamsLength(), funcType.Params)
+		if err != nil {
+			return err
+		}
+	}
+
 	buf.Write(TokenParenRight.Bytes())
 
 	// Return values
-	if funcType != nil && resultsLen > 0 {
+	if funcType != nil && funcType.ResultsLength() > 0 {
 		buf.Write(TokenSpace.Bytes())
-		if resultsLen > 1 {
+
+		// look at first result to decide parentheses
+		var first program.Pair
+		funcType.Results(&first, 0)
+
+		name, ok := g.LookUpStr(first.Key())
+		if !ok {
+			return fmt.Errorf("string with id %d is undefined", first.Key())
+		}
+
+		needParens := funcType.ResultsLength() > 1 || len(name) > 0
+		if needParens {
 			buf.Write(TokenParenLeft.Bytes())
 		}
 
-		for i := range resultsLen {
-			var p program.Pair
-			funcType.Results(&p, i)
-
-			name, ok := g.LookUpStr(p.Key())
-			if !ok {
-				return fmt.Errorf("string with id %d is undefined", p.Key())
-			}
-
-			_type, ok := g.LookUpType(p.Value())
-			if !ok {
-				return fmt.Errorf("type with id %d is undefined", p.Value())
-			}
-
-			typeString, ok := g.LookUpStr(_type.Id())
-			if !ok {
-				return fmt.Errorf("string with id %d is undefined", _type.Id())
-			}
-
-			if i > 0 {
-				buf.Write(TokenComma.Bytes())
-				buf.Write(TokenSpace.Bytes())
-			}
-
-			if len(name) > 0 {
-				buf.Write(name)
-				buf.Write(TokenSpace.Bytes())
-			}
-
-			buf.Write(typeString)
+		err := g.writePairList(buf, funcType.ResultsLength(), funcType.Results)
+		if err != nil {
+			return err
 		}
 
-		if resultsLen > 1 {
+		if needParens {
 			buf.Write(TokenParenRight.Bytes())
 		}
 	}
@@ -149,5 +133,40 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 	buf.Write(body.Bytes())
 	buf.Write(TokenBracesRight.Bytes())
 
+	return nil
+}
+
+func (g *Generator) writePairList(buf *bytes.Buffer, listLength int, getPair func(obj *program.Pair, j int) bool) error {
+	for i := range listLength {
+		var p program.Pair
+		getPair(&p, i)
+
+		name, ok := g.LookUpStr(p.Key())
+		if !ok {
+			return fmt.Errorf("string with id %d is undefined", p.Key())
+		}
+
+		tdef, ok := g.LookUpType(p.Value())
+		if !ok {
+			return fmt.Errorf("type with id %d is undefined", p.Value())
+		}
+
+		typeStr, ok := g.LookUpStr(tdef.Id())
+		if !ok {
+			return fmt.Errorf("string with id %d is undefined", tdef.Id())
+		}
+
+		if i > 0 {
+			buf.Write(TokenComma.Bytes())
+			buf.Write(TokenSpace.Bytes())
+		}
+
+		if len(name) > 0 {
+			buf.Write(name)
+			buf.Write(TokenSpace.Bytes())
+		}
+
+		buf.Write(typeStr)
+	}
 	return nil
 }
