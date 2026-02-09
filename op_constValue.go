@@ -8,9 +8,7 @@ import (
 	program "github.com/Opticode-Project/go-compiler/program"
 )
 
-var test = 10
-
-func (g *Generator) op_assignValue(buf *bytes.Buffer, node *program.BinaryNode, flags EvalFlags, isConst bool) error {
+func (g *Generator) op_constValue(buf *bytes.Buffer, node *program.BinaryNode, flags EvalFlags) error {
 	// Get the left and right values
 	left := node.Left(nil)
 	right := node.Right(nil)
@@ -20,7 +18,7 @@ func (g *Generator) op_assignValue(buf *bytes.Buffer, node *program.BinaryNode, 
 	}
 
 	// const semantic check
-	if isConst && right.Flags()&uint32(schema.ValueFlagPointer) != 0 {
+	if right.Flags()&uint32(schema.ValueFlagPointer) != 0 {
 		target := g.GetNode(right.Value())
 		if target == nil {
 			return fmt.Errorf("undefined node: %d", right.Value())
@@ -49,5 +47,5 @@ func (g *Generator) op_assignValue(buf *bytes.Buffer, node *program.BinaryNode, 
 	buf.Write(TokenEqual.Bytes())
 	buf.Write(TokenSpace.Bytes())
 
-	return g.evalValue(buf, right, isConst)
+	return g.evalValue(buf, right, true)
 }

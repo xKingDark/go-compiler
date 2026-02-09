@@ -79,9 +79,9 @@ func (g *Generator) EvalIndexed(buf *bytes.Buffer, opcode schema.Opcode, node *p
 	case schema.OpcodeImport:
 		return g.op_import(buf, node, evalFlags)
 	case schema.OpcodeConst:
-		return g.op_var(buf, node, evalFlags, true)
+		return g.op_const(buf, node, evalFlags)
 	case schema.OpcodeVar:
-		return g.op_var(buf, node, evalFlags, false)
+		return g.op_var(buf, node, evalFlags)
 	case schema.OpcodeIf:
 		return g.op_if(buf, node, evalFlags)
 	case schema.OpcodeFunc:
@@ -96,9 +96,9 @@ func (g *Generator) EvalBinary(buf *bytes.Buffer, opcode schema.Opcode, node *pr
 	case schema.OpcodeImportValue:
 		return g.op_importValue(buf, node, evalFlags)
 	case schema.OpcodeConstValue:
-		return g.op_assignValue(buf, node, evalFlags, true)
+		return g.op_constValue(buf, node, evalFlags)
 	case schema.OpcodeVarValue:
-		return g.op_assignValue(buf, node, evalFlags, false)
+		return g.op_varValue(buf, node, evalFlags)
 	case schema.OpcodeEqual:
 		return g.op_equal(buf, node, evalFlags)
 	}

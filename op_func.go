@@ -8,6 +8,12 @@ import (
 	program "github.com/Opticode-Project/go-compiler/program"
 )
 
+const (
+	bodyGrowthModifer    = 32
+	paramsGrowthModifer  = 16
+	resultsGrowthModifer = 16
+)
+
 func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags EvalFlags) error {
 	length := node.FieldsLength()
 
@@ -20,6 +26,8 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 		params bytes.Buffer
 		body   bytes.Buffer
 	)
+	params.Grow(length * paramsGrowthModifer)
+	body.Grow(length * bodyGrowthModifer)
 
 	for i := range length {
 		var field program.NodeValue
@@ -81,6 +89,11 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 			body.Write(TokenNewLine.Bytes())
 		}
 	}
+
+	resultLength := funcType.ResultsLength()
+
+	var declarationLength = TokenFunc.Len() + (resultLength * resultsGrowthModifer) + 8
+	buf.Grow(params.Len() + body.Len() + declarationLength)
 
 	// Function declaration
 	buf.Write(TokenFunc.Bytes())

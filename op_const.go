@@ -8,7 +8,7 @@ import (
 	program "github.com/Opticode-Project/go-compiler/program"
 )
 
-func (g *Generator) op_var(buf *bytes.Buffer, node *program.IndexedNode, flags EvalFlags) error {
+func (g *Generator) op_const(buf *bytes.Buffer, node *program.IndexedNode, flags EvalFlags) error {
 	length := node.FieldsLength()
 	if length == 0 {
 		return nil
@@ -21,7 +21,7 @@ func (g *Generator) op_var(buf *bytes.Buffer, node *program.IndexedNode, flags E
 	}
 
 	// keyword
-	buf.Write(TokenVar.Bytes())
+	buf.Write(TokenConst.Bytes())
 
 	if multiline {
 		buf.Write(TokenSpace.Bytes())
@@ -33,7 +33,7 @@ func (g *Generator) op_var(buf *bytes.Buffer, node *program.IndexedNode, flags E
 		node.Fields(&field, i)
 
 		if field.Flags()&uint32(schema.ValueFlagPointer) == 0 {
-			return fmt.Errorf("var node fields must be pointers")
+			return fmt.Errorf("const node fields must be pointers")
 		}
 
 		target := g.GetNode(field.Value())
