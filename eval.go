@@ -114,38 +114,27 @@ func (g *Generator) EvalUnary(buf *bytes.Buffer, opcode schema.Opcode, node *pro
 }
 
 func isConstOperator(op schema.Opcode) bool {
-	switch op {
 	// arithmetic
-	case schema.OpcodeSub,
-		schema.OpcodeMul,
-		schema.OpcodeDiv,
-		schema.OpcodeMod,
-
-		// comparisons
-		schema.OpcodeEqual,
-		schema.OpcodeNotEqual,
-		schema.OpcodeLess,
-		schema.OpcodeLessEqual,
-		schema.OpcodeGreater,
-		schema.OpcodeGreaterEqual,
-
-		// logical
-		schema.OpcodeAnd,
-		schema.OpcodeOr,
-		schema.OpcodeNot,
-
-		// bitwise
-		schema.OpcodeBitAnd,
-		schema.OpcodeBitOr,
-		schema.OpcodeBitXor,
-		schema.OpcodeBitClear,
-		schema.OpcodeLeftShift,
-		schema.OpcodeRightShift:
+	if op >= schema.OpcodeAdd && op <= schema.OpcodeMod {
 		return true
-
-	default:
-		return false
 	}
+
+	// comparisons
+	if op >= schema.OpcodeEqual && op <= schema.OpcodeGreaterEqual {
+		return true
+	}
+
+	// logical
+	if op >= schema.OpcodeAnd && op <= schema.OpcodeNot {
+		return true
+	}
+
+	// bitwise
+	if op >= schema.OpcodeBitAnd && op <= schema.OpcodeRightShift {
+		return true
+	}
+
+	return false
 }
 
 func (g *Generator) isConstValue(v *program.NodeValue) bool {
