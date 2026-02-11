@@ -9,31 +9,32 @@ import (
 
 var test = 10
 
-func (g *Generator) op_varValue(node *program.BinaryNode, flags EvalFlags) ([]byte, error) {
+func (g *Generator) op_varValue(buf *bytes.Buffer, node *program.BinaryNode, flags EvalFlags) error {
 	// Get the left and right values
 	left := node.Left(nil)
 	right := node.Right(nil)
 
-	// New buffer for building the content
-	var buf = new(bytes.Buffer)
+	if left == nil || right == nil {
+		return fmt.Errorf("assignment operands cannot be nil")
+	}
 
+	// indentation
 	if flags&SeperatorTab != 0 {
-		buf.WriteByte('	')
+		buf.Write(TokenTab.Bytes())
 	} else if flags&SeperatorSpace != 0 {
-		buf.WriteByte(' ')
+		buf.Write(TokenSpace.Bytes())
 	}
 
-	g.StrLookupMutex.Lock()
 	leftVal, ok := g.LookUpStr(uint32(left.Value()))
-	g.StrLookupMutex.Unlock()
 	if !ok {
-		return nil, fmt.Errorf("string with id %d is undefined", left.Value())
+		return fmt.Errorf("string with id %d is undefined", left.Value())
 	}
+
 	buf.Write(leftVal)
 
-	buf.Write(JoinBytes(TokenSpace.Bytes(), TokenEqual.Bytes(), TokenSpace.Bytes()))
+	buf.Write(TokenSpace.Bytes())
+	buf.Write(TokenEqual.Bytes())
+	buf.Write(TokenSpace.Bytes())
 
-	g.evalValue(buf, right)
-
-	return buf.Bytes(), nil
+	return g.evalValue(buf, right, false)
 }

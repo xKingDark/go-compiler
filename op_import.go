@@ -8,48 +8,55 @@ import (
 	program "github.com/Opticode-Project/go-compiler/program"
 )
 
-func (g *Generator) op_import(node *program.IndexedNode, flags EvalFlags) ([]byte, error) {
+func (g *Generator) op_import(buf *bytes.Buffer, node *program.IndexedNode, flags EvalFlags) error {
 	length := node.FieldsLength()
-	buf := new(bytes.Buffer)
-	var flag EvalFlags
-	if length > 1 {
-		flag |= SeperatorTab
-	} else {
-		flag |= SeperatorSpace
+	if length == 0 {
+		return nil
+	}
+
+	multiline := length > 1
+	separatorFlag := SeperatorSpace
+	if multiline {
+		separatorFlag = SeperatorTab
+	}
+
+	// import keyword
+	buf.Write(TokenImport.Bytes())
+
+	if multiline {
+		buf.Write(TokenSpace.Bytes())
+		buf.Write(TokenParenLeft.Bytes())
 	}
 
 	for i := range length {
 		var field program.NodeValue
 		node.Fields(&field, i)
-		if i > 0 {
-			buf.WriteByte('\n')
-		}
-		//log.Printf("Field: %d, %s", field.Value(), schema.ValueFlag(field.Flags()))
-		if field.Flags()&uint32(schema.ValueFlagPointer) != 0 {
-			// is pointer
-			node := g.GetNode(field.Value())
-			if node == nil {
-				return nil, fmt.Errorf("attempt to access undefined node: %d", field.Value())
-			}
-			out, err := g.Eval(node, flag)
-			if err != nil {
-				return nil, err
-			}
 
-			//! This preforms an allocation each cycle. (not good)
-			buf.Write(JoinBytes(TokenSpace.Bytes(), out))
+		if field.Flags()&uint32(schema.ValueFlagPointer) == 0 {
+			return fmt.Errorf("import node fields must be pointers")
+		}
+
+		target := g.GetNode(field.Value())
+		if target == nil {
+			return fmt.Errorf("attempt to access undefined node: %d", field.Value())
+		}
+
+		if multiline {
+			buf.Write(TokenNewLine.Bytes())
+			buf.Write(TokenTab.Bytes())
 		} else {
-			return nil, fmt.Errorf("import node fields can only be pointers")
+			buf.Write(TokenSpace.Bytes())
 		}
-		if i > 0 {
-			buf.WriteByte('\n')
+
+		if err := g.evalNode(buf, target, separatorFlag); err != nil {
+			return err
 		}
 	}
 
-	if length > 1 {
-		//! messy and needs work
-		return JoinBytes(TokenImport.Bytes(), TokenSpace.Bytes(), TokenParenLeft.Bytes(), TokenNewLine.Bytes(), buf.Bytes(), TokenParenRight.Bytes()), nil
+	if multiline {
+		buf.Write(TokenNewLine.Bytes())
+		buf.Write(TokenParenRight.Bytes())
 	}
-	//! includes the tab seperator (not intended)
-	return JoinBytes(TokenImport.Bytes(), buf.Bytes()), nil
+
+	return nil
 }

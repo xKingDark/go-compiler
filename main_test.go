@@ -14,10 +14,12 @@ func TestCompile(t *testing.T) {
 	}
 
 	now := time.Now()
+
 	gf, err := Compile(&file)
 	if err != nil {
 		panic(err)
 	}
+
 	log.Printf("Time elapse: %dms", time.Since(now).Milliseconds())
 
 	for _, g := range gf {

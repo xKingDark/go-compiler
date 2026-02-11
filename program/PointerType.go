@@ -41,35 +41,23 @@ func (rcv *PointerType) Table() flatbuffers.Table {
 	return rcv._tab
 }
 
-func (rcv *PointerType) ElemType() Type {
+func (rcv *PointerType) Elem() uint32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
 	if o != 0 {
-		return Type(rcv._tab.GetByte(o + rcv._tab.Pos))
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
 	}
 	return 0
 }
 
-func (rcv *PointerType) MutateElemType(n Type) bool {
-	return rcv._tab.MutateByteSlot(4, byte(n))
-}
-
-func (rcv *PointerType) Elem(obj *flatbuffers.Table) bool {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
-	if o != 0 {
-		rcv._tab.Union(obj, o)
-		return true
-	}
-	return false
+func (rcv *PointerType) MutateElem(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(4, n)
 }
 
 func PointerTypeStart(builder *flatbuffers.Builder) {
-	builder.StartObject(2)
+	builder.StartObject(1)
 }
-func PointerTypeAddElemType(builder *flatbuffers.Builder, elemType Type) {
-	builder.PrependByteSlot(0, byte(elemType), 0)
-}
-func PointerTypeAddElem(builder *flatbuffers.Builder, elem flatbuffers.UOffsetT) {
-	builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(elem), 0)
+func PointerTypeAddElem(builder *flatbuffers.Builder, elem uint32) {
+	builder.PrependUint32Slot(0, elem, 0)
 }
 func PointerTypeEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()
