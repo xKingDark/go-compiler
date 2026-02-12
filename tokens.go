@@ -5,15 +5,53 @@ type TokenKind uint16
 const (
 	TokenEOF TokenKind = iota
 	TokenSpace
-	TokenNewLine
-	TokenQuotation
-	TokenParenLeft   // (
-	TokenParenRight  // )
-	TokenBracesLeft  // {
-	TokenBracesRight // }
-	TokenEqual       // =
-	TokenComma       // ,
-	TokenCompare
+	TokenNewLine    // \n
+	TokenQuotation  // "
+	TokenParenLeft  // (
+	TokenParenRight // )
+	TokenBraceLeft  // {
+	TokenBraceRight // }
+	TokenComma      // ,
+
+	TokenPlus    // +
+	TokenMinus   // -
+	TokenStar    // *
+	TokenSlash   // /
+	TokenModulus // %
+
+	TokenCompare  // ==
+	TokenNotEqual // !=
+	TokenAnd      // &&
+	TokenOr       // ||
+	TokenNot      // !
+
+	TokenBitAnd     // &
+	TokenBitOr      // |
+	TokenBitXor     // ^
+	TokenBitClear   // &^
+	TokenShiftLeft  // <<
+	TokenShiftRight // >>
+
+	TokenEqual            // =
+	TokenAddAssign        // +=
+	TokenSubAssign        // -=
+	TokenMulAssign        // *=
+	TokenDivAssign        // /=
+	TokenModAssign        // %=
+	TokenBitAndAssign     // &=
+	TokenBitOrAssign      // |=
+	TokenBitXorAssign     // ^=
+	TokenBitClearAssign   // &^=
+	TokenShiftLeftAssign  // <<=
+	TokenShiftRightAssign // >>=
+
+	TokenIncrement    // ++
+	TokenDecrement    // --
+	TokenGreater      // >
+	TokenGreaterEqual // >=
+	TokenLess         // <
+	TokenLessEqual    // <=
+
 	TokenTab
 	TokenPackage
 	TokenImport
@@ -22,6 +60,9 @@ const (
 	TokenIf
 	TokenElse
 	TokenFunc
+	TokenDefer
+	TokenGo
+	TokenReturn
 )
 
 var tokens = [][]byte{
@@ -33,9 +74,47 @@ var tokens = [][]byte{
 	[]byte(")"),
 	[]byte("{"),
 	[]byte("}"),
-	[]byte("="),
 	[]byte(","),
+
+	[]byte("+"),
+	[]byte("-"),
+	[]byte("*"),
+	[]byte("/"),
+	[]byte("%"),
+
 	[]byte("=="),
+	[]byte("!="),
+	[]byte("&&"),
+	[]byte("||"),
+	[]byte("!"),
+
+	[]byte("&"),
+	[]byte("|"),
+	[]byte("^"),
+	[]byte("&^"),
+	[]byte("<<"),
+	[]byte(">>"),
+
+	[]byte("="),
+	[]byte("+="),
+	[]byte("-="),
+	[]byte("*="),
+	[]byte("/="),
+	[]byte("%="),
+	[]byte("&="),
+	[]byte("|="),
+	[]byte("^="),
+	[]byte("&^="),
+	[]byte("<<="),
+	[]byte(">>="),
+
+	[]byte("++"),
+	[]byte("--"),
+	[]byte(">"),
+	[]byte(">="),
+	[]byte("<"),
+	[]byte("<="),
+
 	[]byte("    "),
 	[]byte("package"),
 	[]byte("import"),
@@ -44,6 +123,9 @@ var tokens = [][]byte{
 	[]byte("if"),
 	[]byte("else"),
 	[]byte("func"),
+	[]byte("defer"),
+	[]byte("go"),
+	[]byte("return"),
 }
 
 func (t TokenKind) Bytes() []byte {
@@ -58,26 +140,4 @@ func (t TokenKind) Len() int {
 		return 0
 	}
 	return len(tokens[t])
-}
-
-// JoinBytes efficiently concatenates multiple byte slices into one.
-// It performs exactly ONE allocation, regardless of the number of slices.
-func JoinBytes(slices ...[]byte) []byte {
-	// Compute total length first
-	totalLen := 0
-	for _, s := range slices {
-		totalLen += len(s)
-	}
-
-	// Allocate the final slice with exact capacity
-	result := make([]byte, totalLen)
-
-	// Copy each slice in sequence
-	offset := 0
-	for _, s := range slices {
-		copy(result[offset:], s)
-		offset += len(s)
-	}
-
-	return result
 }

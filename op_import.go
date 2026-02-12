@@ -43,9 +43,6 @@ func (g *Generator) op_import(buf *bytes.Buffer, node *program.IndexedNode, flag
 
 		if multiline {
 			buf.Write(TokenNewLine.Bytes())
-			buf.Write(TokenTab.Bytes())
-		} else {
-			buf.Write(TokenSpace.Bytes())
 		}
 
 		if err := g.evalNode(buf, target, separatorFlag); err != nil {

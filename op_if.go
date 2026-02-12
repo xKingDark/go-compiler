@@ -61,10 +61,10 @@ func (g *Generator) op_if(buf *bytes.Buffer, node *program.IndexedNode, flags Ev
 	buf.Write(condition.Bytes())
 	buf.Write(TokenSpace.Bytes())
 
-	buf.Write(TokenBracesLeft.Bytes())
+	buf.Write(TokenBraceLeft.Bytes())
 	buf.Write(TokenNewLine.Bytes())
 	buf.Write(thenBody.Bytes())
-	buf.Write(TokenBracesRight.Bytes())
+	buf.Write(TokenBraceRight.Bytes())
 
 	if elseIfNode != nil {
 		buf.Write(TokenSpace.Bytes())
@@ -79,10 +79,10 @@ func (g *Generator) op_if(buf *bytes.Buffer, node *program.IndexedNode, flags Ev
 		buf.Write(TokenElse.Bytes())
 		buf.Write(TokenSpace.Bytes())
 
-		buf.Write(TokenBracesLeft.Bytes())
+		buf.Write(TokenBraceLeft.Bytes())
 		buf.Write(TokenNewLine.Bytes())
 		buf.Write(elseBody.Bytes())
-		buf.Write(TokenBracesRight.Bytes())
+		buf.Write(TokenBraceRight.Bytes())
 	}
 
 	return nil

@@ -141,10 +141,10 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 
 	// Body
 	buf.Write(TokenSpace.Bytes())
-	buf.Write(TokenBracesLeft.Bytes())
+	buf.Write(TokenBraceLeft.Bytes())
 	buf.Write(TokenNewLine.Bytes())
 	buf.Write(body.Bytes())
-	buf.Write(TokenBracesRight.Bytes())
+	buf.Write(TokenBraceRight.Bytes())
 
 	return nil
 }

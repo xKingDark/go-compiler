@@ -30,7 +30,9 @@ func (g *Generator) op_importValue(buf *bytes.Buffer, node *program.BinaryNode, 
 	buf.Write(leftValue)
 
 	// write seperator
-	buf.Write(TokenSpace.Bytes())
+	if len(leftValue) > 0 {
+		buf.Write(TokenSpace.Bytes())
+	}
 
 	// quoted package path
 	rightValue, ok := g.LookUpStr(uint32(right.Value()))

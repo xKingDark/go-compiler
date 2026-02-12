@@ -86,6 +86,10 @@ func (g *Generator) EvalIndexed(buf *bytes.Buffer, opcode schema.Opcode, node *p
 		return g.op_if(buf, node, evalFlags)
 	case schema.OpcodeFunc:
 		return g.op_func(buf, node, evalFlags)
+	case schema.OpcodeCall:
+		return g.op_call(buf, node, evalFlags)
+	case schema.OpcodeReturn:
+		return g.op_return(buf, node, evalFlags)
 	}
 
 	return fmt.Errorf("invalid opcode on node with opcode of %s", opcode)
@@ -99,8 +103,71 @@ func (g *Generator) EvalBinary(buf *bytes.Buffer, opcode schema.Opcode, node *pr
 		return g.op_constValue(buf, node, evalFlags)
 	case schema.OpcodeVarValue:
 		return g.op_varValue(buf, node, evalFlags)
+
 	case schema.OpcodeEqual:
 		return g.op_equal(buf, node, evalFlags)
+	case schema.OpcodeNotEqual:
+		return g.op_notEqual(buf, node, evalFlags)
+	case schema.OpcodeLess:
+		return g.op_less(buf, node, evalFlags)
+	case schema.OpcodeLessEqual:
+		return g.op_lessEqual(buf, node, evalFlags)
+	case schema.OpcodeGreater:
+		return g.op_less(buf, node, evalFlags)
+	case schema.OpcodeGreaterEqual:
+		return g.op_greaterEqual(buf, node, evalFlags)
+	case schema.OpcodeAnd:
+		return g.op_and(buf, node, evalFlags)
+	case schema.OpcodeOr:
+		return g.op_or(buf, node, evalFlags)
+
+	case schema.OpcodeAdd:
+		return g.op_add(buf, node, evalFlags)
+	case schema.OpcodeSub:
+		return g.op_sub(buf, node, evalFlags)
+	case schema.OpcodeMul:
+		return g.op_mul(buf, node, evalFlags)
+	case schema.OpcodeDiv:
+		return g.op_div(buf, node, evalFlags)
+	case schema.OpcodeMod:
+		return g.op_mod(buf, node, evalFlags)
+	case schema.OpcodeAssign:
+		return g.op_assign(buf, node, evalFlags)
+	case schema.OpcodeAddAssign:
+		return g.op_addAssign(buf, node, evalFlags)
+	case schema.OpcodeSubAssign:
+		return g.op_subAssign(buf, node, evalFlags)
+	case schema.OpcodeMulAssign:
+		return g.op_mulAssign(buf, node, evalFlags)
+	case schema.OpcodeDivAssign:
+		return g.op_divAssign(buf, node, evalFlags)
+	case schema.OpcodeModAssign:
+		return g.op_modAssign(buf, node, evalFlags)
+
+	case schema.OpcodeBitAndAssign:
+		return g.op_bitAndAssign(buf, node, evalFlags)
+	case schema.OpcodeBitOrAssign:
+		return g.op_bitOrAssign(buf, node, evalFlags)
+	case schema.OpcodeBitXorAssign:
+		return g.op_bitXorAssign(buf, node, evalFlags)
+	case schema.OpcodeBitClearAssign:
+		return g.op_bitClearAssign(buf, node, evalFlags)
+	case schema.OpcodeLeftShiftAssign:
+		return g.op_leftShiftAssign(buf, node, evalFlags)
+	case schema.OpcodeRightShiftAssign:
+		return g.op_rightShiftAssign(buf, node, evalFlags)
+	case schema.OpcodeBitAnd:
+		return g.op_bitAnd(buf, node, evalFlags)
+	case schema.OpcodeBitOr:
+		return g.op_bitOr(buf, node, evalFlags)
+	case schema.OpcodeBitXor:
+		return g.op_bitXor(buf, node, evalFlags)
+	case schema.OpcodeBitClear:
+		return g.op_bitClear(buf, node, evalFlags)
+	case schema.OpcodeLeftShift:
+		return g.op_leftShift(buf, node, evalFlags)
+	case schema.OpcodeRightShift:
+		return g.op_rightShift(buf, node, evalFlags)
 	}
 
 	return fmt.Errorf("invalid opcode on node with opcode of %s", opcode)
@@ -108,6 +175,21 @@ func (g *Generator) EvalBinary(buf *bytes.Buffer, opcode schema.Opcode, node *pr
 
 func (g *Generator) EvalUnary(buf *bytes.Buffer, opcode schema.Opcode, node *program.UnaryNode, evalFlags EvalFlags) error {
 	switch opcode {
+	case schema.OpcodeNot:
+		return g.op_not(buf, node, evalFlags)
+	case schema.OpcodeDefer:
+		return g.op_defer(buf, node, evalFlags)
+	case schema.OpcodeGoRoutine:
+		return g.op_goRoutine(buf, node, evalFlags)
+
+	case schema.OpcodeInc:
+		return g.op_inc(buf, node, evalFlags)
+	case schema.OpcodeDec:
+		return g.op_dec(buf, node, evalFlags)
+	case schema.OpcodeAddrOf:
+		return g.op_addrOf(buf, node, evalFlags)
+	case schema.OpcodeDeref:
+		return g.op_deref(buf, node, evalFlags)
 	}
 
 	return fmt.Errorf("invalid opcode on node with opcode of %s", opcode)
