@@ -25,4 +25,14 @@ func TestCompile(t *testing.T) {
 	for _, g := range gf {
 		log.Println(string(*g.Content))
 	}
+	if len(os.Args) > 0 && os.Args[len(os.Args)-1] == "export-as-files" {
+		for _, g := range gf {
+			d := "./exports/" + g.Path + ".go"
+			err := g.Write(d)
+			if err != nil {
+				panic(err)
+			}
+			log.Printf("Wrote to %s", d)
+		}
+	}
 }
