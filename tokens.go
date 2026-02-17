@@ -5,13 +5,15 @@ type TokenKind uint16
 const (
 	TokenEOF TokenKind = iota
 	TokenSpace
-	TokenNewLine    // \n
-	TokenQuotation  // "
-	TokenParenLeft  // (
-	TokenParenRight // )
-	TokenBraceLeft  // {
-	TokenBraceRight // }
-	TokenComma      // ,
+	TokenNewLine      // \n
+	TokenQuotation    // "
+	TokenParenLeft    // (
+	TokenParenRight   // )
+	TokenBraceLeft    // {
+	TokenBraceRight   // }
+	TokenBracketLeft  // [
+	TokenBracketRight // ]
+	TokenComma        // ,
 
 	TokenPlus    // +
 	TokenMinus   // -
@@ -62,6 +64,7 @@ const (
 	TokenFunc
 	TokenDefer
 	TokenGo
+	TokenMap
 	TokenReturn
 )
 
@@ -74,6 +77,8 @@ var tokens = [][]byte{
 	[]byte(")"),
 	[]byte("{"),
 	[]byte("}"),
+	[]byte("["),
+	[]byte("]"),
 	[]byte(","),
 
 	[]byte("+"),
@@ -125,6 +130,7 @@ var tokens = [][]byte{
 	[]byte("func"),
 	[]byte("defer"),
 	[]byte("go"),
+	[]byte("map"),
 	[]byte("return"),
 }
 

@@ -22,6 +22,11 @@ func (g *Generator) op_call(buf *bytes.Buffer, node *program.IndexedNode, flags 
 		var field program.NodeValue
 		node.Fields(&field, i)
 
+		if i > 0 {
+			buf.Write(TokenComma.Bytes())
+			buf.Write(TokenSpace.Bytes())
+		}
+
 		if err := g.evalValue(buf, &field, false); err != nil {
 			return err
 		}

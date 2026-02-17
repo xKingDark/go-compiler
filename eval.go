@@ -105,69 +105,69 @@ func (g *Generator) EvalBinary(buf *bytes.Buffer, opcode schema.Opcode, node *pr
 		return g.op_varValue(buf, node, evalFlags)
 
 	case schema.OpcodeEqual:
-		return g.op_equal(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenCompare, evalFlags)
 	case schema.OpcodeNotEqual:
-		return g.op_notEqual(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenNotEqual, evalFlags)
 	case schema.OpcodeLess:
-		return g.op_less(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenLess, evalFlags)
 	case schema.OpcodeLessEqual:
-		return g.op_lessEqual(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenLessEqual, evalFlags)
 	case schema.OpcodeGreater:
-		return g.op_less(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenGreater, evalFlags)
 	case schema.OpcodeGreaterEqual:
-		return g.op_greaterEqual(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenGreaterEqual, evalFlags)
 	case schema.OpcodeAnd:
-		return g.op_and(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenAnd, evalFlags)
 	case schema.OpcodeOr:
-		return g.op_or(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenOr, evalFlags)
 
 	case schema.OpcodeAdd:
-		return g.op_add(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenPlus, evalFlags)
 	case schema.OpcodeSub:
-		return g.op_sub(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenMinus, evalFlags)
 	case schema.OpcodeMul:
-		return g.op_mul(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenStar, evalFlags)
 	case schema.OpcodeDiv:
-		return g.op_div(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenSlash, evalFlags)
 	case schema.OpcodeMod:
-		return g.op_mod(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenModulus, evalFlags)
 	case schema.OpcodeAssign:
-		return g.op_assign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenEqual, evalFlags)
 	case schema.OpcodeAddAssign:
-		return g.op_addAssign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenAddAssign, evalFlags)
 	case schema.OpcodeSubAssign:
-		return g.op_subAssign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenSubAssign, evalFlags)
 	case schema.OpcodeMulAssign:
-		return g.op_mulAssign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenMulAssign, evalFlags)
 	case schema.OpcodeDivAssign:
-		return g.op_divAssign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenDivAssign, evalFlags)
 	case schema.OpcodeModAssign:
-		return g.op_modAssign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenModAssign, evalFlags)
 
 	case schema.OpcodeBitAndAssign:
-		return g.op_bitAndAssign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenBitAndAssign, evalFlags)
 	case schema.OpcodeBitOrAssign:
-		return g.op_bitOrAssign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenBitOrAssign, evalFlags)
 	case schema.OpcodeBitXorAssign:
-		return g.op_bitXorAssign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenBitXorAssign, evalFlags)
 	case schema.OpcodeBitClearAssign:
-		return g.op_bitClearAssign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenBitClearAssign, evalFlags)
 	case schema.OpcodeLeftShiftAssign:
-		return g.op_leftShiftAssign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenShiftLeftAssign, evalFlags)
 	case schema.OpcodeRightShiftAssign:
-		return g.op_rightShiftAssign(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenShiftRightAssign, evalFlags)
 	case schema.OpcodeBitAnd:
-		return g.op_bitAnd(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenBitAnd, evalFlags)
 	case schema.OpcodeBitOr:
-		return g.op_bitOr(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenBitOr, evalFlags)
 	case schema.OpcodeBitXor:
-		return g.op_bitXor(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenBitXor, evalFlags)
 	case schema.OpcodeBitClear:
-		return g.op_bitClear(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenBitClear, evalFlags)
 	case schema.OpcodeLeftShift:
-		return g.op_leftShift(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenShiftLeft, evalFlags)
 	case schema.OpcodeRightShift:
-		return g.op_rightShift(buf, node, evalFlags)
+		return g.op_binary(buf, node, TokenShiftRight, evalFlags)
 	}
 
 	return fmt.Errorf("invalid opcode on node with opcode of %s", opcode)
@@ -176,20 +176,20 @@ func (g *Generator) EvalBinary(buf *bytes.Buffer, opcode schema.Opcode, node *pr
 func (g *Generator) EvalUnary(buf *bytes.Buffer, opcode schema.Opcode, node *program.UnaryNode, evalFlags EvalFlags) error {
 	switch opcode {
 	case schema.OpcodeNot:
-		return g.op_not(buf, node, evalFlags)
+		return g.op_unaryPrefix(buf, node, TokenNot, evalFlags)
 	case schema.OpcodeDefer:
 		return g.op_defer(buf, node, evalFlags)
 	case schema.OpcodeGoRoutine:
 		return g.op_goRoutine(buf, node, evalFlags)
 
 	case schema.OpcodeInc:
-		return g.op_inc(buf, node, evalFlags)
+		return g.op_unaryPostfix(buf, node, TokenIncrement, evalFlags)
 	case schema.OpcodeDec:
-		return g.op_dec(buf, node, evalFlags)
+		return g.op_unaryPostfix(buf, node, TokenDecrement, evalFlags)
 	case schema.OpcodeAddrOf:
-		return g.op_addrOf(buf, node, evalFlags)
+		return g.op_unaryPrefix(buf, node, TokenBitAnd, evalFlags)
 	case schema.OpcodeDeref:
-		return g.op_deref(buf, node, evalFlags)
+		return g.op_unaryPrefix(buf, node, TokenStar, evalFlags)
 	}
 
 	return fmt.Errorf("invalid opcode on node with opcode of %s", opcode)
