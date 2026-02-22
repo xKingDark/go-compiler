@@ -184,9 +184,9 @@ func (g *Generator) EvalUnary(buf *bytes.Buffer, opcode schema.Opcode, node *pro
 		return g.op_goRoutine(buf, node, evalFlags)
 
 	case schema.OpcodeInc:
-		return g.op_unaryPostfix(buf, node, TokenIncrement, evalFlags)
+		return g.op_unarySuffix(buf, node, TokenIncrement, evalFlags)
 	case schema.OpcodeDec:
-		return g.op_unaryPostfix(buf, node, TokenDecrement, evalFlags)
+		return g.op_unarySuffix(buf, node, TokenDecrement, evalFlags)
 	case schema.OpcodeAddrOf:
 		return g.op_unaryPrefix(buf, node, TokenBitAnd, evalFlags)
 	case schema.OpcodeDeref:
