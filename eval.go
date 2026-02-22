@@ -3,6 +3,7 @@ package golang
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 
 	schema "github.com/Opticode-Project/go-compiler/golang"
 	program "github.com/Opticode-Project/go-compiler/program"
@@ -329,8 +330,231 @@ func EvalType(t *program.TypeDef) (any, error) {
 		ptr.Init(unionTable.Bytes, unionTable.Pos)
 
 		return ptr, nil
+	case program.TypeMapType:
+		ptr := new(program.MapType)
+		ptr.Init(unionTable.Bytes, unionTable.Pos)
+
+		return ptr, nil
+	case program.TypeArrayType:
+		ptr := new(program.ArrayType)
+		ptr.Init(unionTable.Bytes, unionTable.Pos)
+
+		return ptr, nil
+	case program.TypeTupleType:
+		ptr := new(program.TupleType)
+		ptr.Init(unionTable.Bytes, unionTable.Pos)
+
+		return ptr, nil
+	case program.TypeStructureType:
+		ptr := new(program.StructureType)
+		ptr.Init(unionTable.Bytes, unionTable.Pos)
+
+		return ptr, nil
 
 	default:
 		return nil, fmt.Errorf("unknown type kind: %d", t.TypeType())
 	}
+}
+
+func (g *Generator) evalType(buf *bytes.Buffer, t *program.TypeDef) error {
+	if t.TypeType() == program.TypeNONE {
+		name, ok := g.LookUpStr(t.Base())
+		if !ok {
+			return fmt.Errorf("string with id %d is undefined", t.Base())
+		}
+
+		buf.Write(name)
+		return nil
+	}
+
+	v, err := EvalType(t)
+	if err != nil {
+		return err
+	}
+
+	switch ty := v.(type) {
+	case *program.PointerType:
+		buf.Write(TokenStar.Bytes())
+		elem, ok := g.LookUpType(ty.Elem())
+		if !ok {
+			return fmt.Errorf("type with id %d is undefined", ty.Elem())
+		}
+
+		return g.evalType(buf, elem)
+
+	case *program.MapType:
+		buf.Write(TokenMap.Bytes())
+		buf.Write(TokenBracketLeft.Bytes())
+
+		key, ok := g.LookUpType(ty.Key())
+		if !ok {
+			return fmt.Errorf("type with id %d is undefined", ty.Key())
+		}
+
+		if err := g.evalType(buf, key); err != nil {
+			return err
+		}
+
+		buf.Write(TokenBracketRight.Bytes())
+
+		value, ok := g.LookUpType(ty.Value())
+		if !ok {
+			return fmt.Errorf("type with id %d is undefined", ty.Value())
+		}
+
+		return g.evalType(buf, value)
+
+	case *program.ArrayType:
+		buf.Write(TokenBracketLeft.Bytes())
+		buf.WriteString(strconv.Itoa(int(ty.Size())))
+		buf.Write(TokenBracketRight.Bytes())
+
+		elem, ok := g.LookUpType(ty.Elem())
+		if !ok {
+			return fmt.Errorf("type with id %d is undefined", ty.Elem())
+		}
+
+		return g.evalType(buf, elem)
+
+	case *program.TupleType:
+		buf.Write(TokenParenLeft.Bytes())
+		for i := 0; i < ty.ElemLength(); i++ {
+			if i > 0 {
+				buf.Write(TokenComma.Bytes())
+				buf.Write(TokenSpace.Bytes())
+			}
+
+			elem, ok := g.LookUpType(ty.Elem(i))
+			if !ok {
+				return fmt.Errorf("type with id %d is undefined", ty.Elem(i))
+			}
+
+			if err := g.evalType(buf, elem); err != nil {
+				return err
+			}
+		}
+		buf.Write(TokenParenRight.Bytes())
+		return nil
+
+	case *program.StructureType:
+		buf.Write(TokenStruct.Bytes())
+		buf.Write(TokenSpace.Bytes())
+
+		buf.Write(TokenBraceLeft.Bytes())
+
+		buf.Write(TokenNewLine.Bytes())
+		for i := 0; i < ty.FieldsLength(); i++ {
+			buf.Write(TokenTab.Bytes())
+
+			var f program.StructureField
+			ty.Fields(&f, i)
+
+			name, ok := g.LookUpStr(f.Name())
+			if !ok {
+				return fmt.Errorf("string with id %d is undefined", f.Name())
+			}
+			buf.Write(name)
+			buf.Write(TokenSpace.Bytes())
+
+			def, ok := g.LookUpType(f.Type())
+			if !ok {
+				return fmt.Errorf("type with id %d is undefined", f.Type())
+			}
+
+			if err := g.evalType(buf, def); err != nil {
+				return err
+			}
+
+			buf.Write(TokenNewLine.Bytes())
+		}
+
+		buf.Write(TokenBraceRight.Bytes())
+		return nil
+
+	case *program.FunctionType:
+		// Function declaration
+		buf.Write(TokenFunc.Bytes())
+
+		funcName, ok := g.LookUpStr(t.Id())
+		if !ok {
+			return fmt.Errorf("string with id %d is undefined", t.Id())
+		}
+
+		buf.Write(TokenSpace.Bytes())
+		buf.Write(funcName)
+
+		// Parameters
+		buf.Write(TokenParenLeft.Bytes())
+		if ty.ParamsLength() > 0 {
+			err := g.writePairList(buf, ty.ParamsLength(), ty.Params)
+			if err != nil {
+				return err
+			}
+		}
+		buf.Write(TokenParenRight.Bytes())
+
+		// Return values
+		if ty.ResultsLength() > 0 {
+			buf.Write(TokenSpace.Bytes())
+
+			// look at first result to decide parentheses
+			var first program.Pair
+			ty.Results(&first, 0)
+
+			name, ok := g.LookUpStr(first.Key())
+			if !ok {
+				return fmt.Errorf("string with id %d is undefined", first.Key())
+			}
+
+			needParens := ty.ResultsLength() > 1 || len(name) > 0
+			if needParens {
+				buf.Write(TokenParenLeft.Bytes())
+			}
+
+			err := g.writePairList(buf, ty.ResultsLength(), ty.Results)
+			if err != nil {
+				return err
+			}
+
+			if needParens {
+				buf.Write(TokenParenRight.Bytes())
+			}
+		}
+		return nil
+
+	default:
+		return fmt.Errorf("unsupported type: %T", v)
+	}
+}
+
+func (g *Generator) writePairList(buf *bytes.Buffer, listLength int, getPair func(obj *program.Pair, j int) bool) error {
+	for i := range listLength {
+		if i > 0 {
+			buf.Write(TokenComma.Bytes())
+			buf.Write(TokenSpace.Bytes())
+		}
+
+		var p program.Pair
+		getPair(&p, i)
+
+		name, ok := g.LookUpStr(p.Key())
+		if !ok {
+			return fmt.Errorf("string with id %d is undefined", p.Key())
+		}
+
+		if len(name) > 0 {
+			buf.Write(name)
+			buf.Write(TokenSpace.Bytes())
+		}
+
+		def, ok := g.LookUpType(p.Value())
+		if !ok {
+			return fmt.Errorf("type with id %d is undefined", p.Value())
+		}
+
+		if err := g.evalType(buf, def); err != nil {
+			return err
+		}
+	}
+	return nil
 }

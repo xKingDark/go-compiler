@@ -12,7 +12,7 @@ func (g *Generator) op_return(buf *bytes.Buffer, node *program.IndexedNode, flag
 	length := node.FieldsLength()
 
 	var params bytes.Buffer
-	params.Grow(length * paramsGrowthModifer)
+	params.Grow(length * 16)
 
 	for i := range length {
 		var field program.NodeValue

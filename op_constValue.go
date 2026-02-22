@@ -43,6 +43,16 @@ func (g *Generator) op_constValue(buf *bytes.Buffer, node *program.BinaryNode, f
 
 	buf.Write(leftVal)
 
+	def, ok := g.LookUpType(left.Type())
+	if !ok {
+		return fmt.Errorf("type with id %d is undefined", left.Type())
+	}
+
+	buf.Write(TokenSpace.Bytes())
+	if err := g.evalType(buf, def); err != nil {
+		return err
+	}
+
 	buf.Write(TokenSpace.Bytes())
 	buf.Write(TokenEqual.Bytes())
 	buf.Write(TokenSpace.Bytes())
