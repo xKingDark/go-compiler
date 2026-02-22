@@ -340,11 +340,6 @@ func EvalType(t *program.TypeDef) (any, error) {
 		ptr.Init(unionTable.Bytes, unionTable.Pos)
 
 		return ptr, nil
-	case program.TypeTupleType:
-		ptr := new(program.TupleType)
-		ptr.Init(unionTable.Bytes, unionTable.Pos)
-
-		return ptr, nil
 	case program.TypeStructureType:
 		ptr := new(program.StructureType)
 		ptr.Init(unionTable.Bytes, unionTable.Pos)
@@ -416,26 +411,6 @@ func (g *Generator) evalType(buf *bytes.Buffer, t *program.TypeDef) error {
 
 		return g.evalType(buf, elem)
 
-	case *program.TupleType:
-		buf.Write(TokenParenLeft.Bytes())
-		for i := 0; i < ty.ElemLength(); i++ {
-			if i > 0 {
-				buf.Write(TokenComma.Bytes())
-				buf.Write(TokenSpace.Bytes())
-			}
-
-			elem, ok := g.LookUpType(ty.Elem(i))
-			if !ok {
-				return fmt.Errorf("type with id %d is undefined", ty.Elem(i))
-			}
-
-			if err := g.evalType(buf, elem); err != nil {
-				return err
-			}
-		}
-		buf.Write(TokenParenRight.Bytes())
-		return nil
-
 	case *program.StructureType:
 		buf.Write(TokenStruct.Bytes())
 		buf.Write(TokenSpace.Bytes())
@@ -472,16 +447,7 @@ func (g *Generator) evalType(buf *bytes.Buffer, t *program.TypeDef) error {
 		return nil
 
 	case *program.FunctionType:
-		// Function declaration
 		buf.Write(TokenFunc.Bytes())
-
-		funcName, ok := g.LookUpStr(t.Id())
-		if !ok {
-			return fmt.Errorf("string with id %d is undefined", t.Id())
-		}
-
-		buf.Write(TokenSpace.Bytes())
-		buf.Write(funcName)
 
 		// Parameters
 		buf.Write(TokenParenLeft.Bytes())

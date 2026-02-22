@@ -8,11 +8,26 @@ import (
 	program "github.com/Opticode-Project/go-compiler/program"
 )
 
+const (
+	bodyGrowthModifer    = 32
+	paramsGrowthModifer  = 16
+	resultsGrowthModifer = 16
+)
+
 func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags EvalFlags) error {
 	length := node.FieldsLength()
 
-	var body bytes.Buffer
-	body.Grow(length * 32)
+	var (
+		funcId   []byte
+		funcType *program.FunctionType
+	)
+
+	var (
+		params bytes.Buffer
+		body   bytes.Buffer
+	)
+	params.Grow(length * paramsGrowthModifer)
+	body.Grow(length * bodyGrowthModifer)
 
 	for i := range length {
 		var field program.NodeValue
@@ -24,9 +39,24 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 				return fmt.Errorf("type with id %d is undefined", field.Type())
 			}
 
-			if err := g.evalType(buf, def); err != nil {
+			funcName, ok := g.LookUpStr(def.Id())
+			if !ok {
+				return fmt.Errorf("string with id %d is undefined", def.Id())
+			}
+
+			funcId = funcName
+
+			v, err := EvalType(def)
+			if err != nil {
 				return err
 			}
+
+			ft, ok := v.(*program.FunctionType)
+			if !ok {
+				return fmt.Errorf("expected *program.FuncType but got %T", v)
+			}
+
+			funcType = ft
 			continue
 		}
 
@@ -40,6 +70,16 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 		}
 
 		switch {
+		case field.Flags()&uint32(schema.ValueFlagFuncParam) != 0:
+			if params.Len() > 0 {
+				params.Write(TokenComma.Bytes())
+				params.Write(TokenSpace.Bytes())
+			}
+
+			if err := g.evalNode(&params, target, 0); err != nil {
+				return err
+			}
+
 		case field.Flags()&uint32(schema.ValueFlagFuncBody) != 0:
 			body.Write(TokenTab.Bytes())
 			if err := g.evalNode(&body, target, 0); err != nil {
@@ -47,6 +87,55 @@ func (g *Generator) op_func(buf *bytes.Buffer, node *program.IndexedNode, flags 
 			}
 
 			body.Write(TokenNewLine.Bytes())
+		}
+	}
+
+	resultLength := funcType.ResultsLength()
+
+	var declarationLength = TokenFunc.Len() + (resultLength * resultsGrowthModifer) + 8
+	buf.Grow(params.Len() + body.Len() + declarationLength)
+
+	// Function declaration
+	buf.Write(TokenFunc.Bytes())
+	buf.Write(TokenSpace.Bytes())
+	buf.Write(funcId)
+	buf.Write(TokenParenLeft.Bytes())
+
+	// Parameters
+	if funcType != nil && funcType.ParamsLength() > 0 {
+		err := g.writePairList(buf, funcType.ParamsLength(), funcType.Params)
+		if err != nil {
+			return err
+		}
+	}
+
+	buf.Write(TokenParenRight.Bytes())
+
+	// Return values
+	if funcType != nil && funcType.ResultsLength() > 0 {
+		buf.Write(TokenSpace.Bytes())
+
+		// look at first result to decide parentheses
+		var first program.Pair
+		funcType.Results(&first, 0)
+
+		name, ok := g.LookUpStr(first.Key())
+		if !ok {
+			return fmt.Errorf("string with id %d is undefined", first.Key())
+		}
+
+		needParens := funcType.ResultsLength() > 1 || len(name) > 0
+		if needParens {
+			buf.Write(TokenParenLeft.Bytes())
+		}
+
+		err := g.writePairList(buf, funcType.ResultsLength(), funcType.Results)
+		if err != nil {
+			return err
+		}
+
+		if needParens {
+			buf.Write(TokenParenRight.Bytes())
 		}
 	}
 
