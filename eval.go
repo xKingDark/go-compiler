@@ -89,6 +89,8 @@ func (g *Generator) EvalIndexed(buf *bytes.Buffer, opcode schema.Opcode, node *p
 		return g.op_func(buf, node, evalFlags)
 	case schema.OpcodeCall:
 		return g.op_call(buf, node, evalFlags)
+	case schema.OpcodeType:
+		return g.op_type(buf, node, evalFlags)
 	case schema.OpcodeReturn:
 		return g.op_return(buf, node, evalFlags)
 	}
@@ -412,12 +414,16 @@ func (g *Generator) evalType(buf *bytes.Buffer, t *program.TypeDef) error {
 		return g.evalType(buf, elem)
 
 	case *program.StructureType:
-		buf.Write(TokenStruct.Bytes())
+		name, ok := g.LookUpStr(t.Base())
+		if !ok {
+			return fmt.Errorf("string with id %d is undefined", t.Base())
+		}
+		buf.Write(name)
 		buf.Write(TokenSpace.Bytes())
 
 		buf.Write(TokenBraceLeft.Bytes())
-
 		buf.Write(TokenNewLine.Bytes())
+
 		for i := 0; i < ty.FieldsLength(); i++ {
 			buf.Write(TokenTab.Bytes())
 
@@ -431,11 +437,43 @@ func (g *Generator) evalType(buf *bytes.Buffer, t *program.TypeDef) error {
 			buf.Write(name)
 			buf.Write(TokenSpace.Bytes())
 
+			// Look for the field definition
 			def, ok := g.LookUpType(f.Type())
 			if !ok {
 				return fmt.Errorf("type with id %d is undefined", f.Type())
 			}
 
+			if def.TypeType() == program.TypeFunctionType {
+				buf.Write(TokenFunc.Bytes())
+			}
+
+			// Evaluate and write the field definition to the buffer
+			if err := g.evalType(buf, def); err != nil {
+				return err
+			}
+
+			buf.Write(TokenNewLine.Bytes())
+		}
+
+		for i := 0; i < ty.DefsLength(); i++ {
+			buf.Write(TokenTab.Bytes())
+
+			var defId = ty.Defs(i)
+
+			// Look for the method defintion
+			def, ok := g.LookUpType(defId)
+			if !ok {
+				return fmt.Errorf("type with id %d is undefined", defId)
+			}
+
+			// Write the function name to the buffer
+			funcName, ok := g.LookUpStr(def.Id())
+			if !ok {
+				return fmt.Errorf("string with id %d is undefined", def.Id())
+			}
+			buf.Write(funcName)
+
+			// Evaluate and write the type definition to the buffer
 			if err := g.evalType(buf, def); err != nil {
 				return err
 			}
@@ -447,8 +485,6 @@ func (g *Generator) evalType(buf *bytes.Buffer, t *program.TypeDef) error {
 		return nil
 
 	case *program.FunctionType:
-		buf.Write(TokenFunc.Bytes())
-
 		// Parameters
 		buf.Write(TokenParenLeft.Bytes())
 		if ty.ParamsLength() > 0 {

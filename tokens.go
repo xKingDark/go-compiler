@@ -65,7 +65,7 @@ const (
 	TokenDefer
 	TokenGo
 	TokenMap
-	TokenStruct
+	TokenType
 	TokenReturn
 )
 
@@ -132,7 +132,7 @@ var tokens = [][]byte{
 	[]byte("defer"),
 	[]byte("go"),
 	[]byte("map"),
-	[]byte("struct"),
+	[]byte("type"),
 	[]byte("return"),
 }
 
